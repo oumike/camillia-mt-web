@@ -7,6 +7,7 @@ export const DEVICES = [
     chip: 'ESP32-S3',
     desc: 'SX1262 LoRa, 320×240 display, physical keyboard, trackball, L76K GPS. Full mesh UI with microSD config import/export.',
     link: 'https://www.lilygo.cc/products/t-deck',
+    image: '/devices/tdeck.png',
   },
   {
     env: 'tlora-pager-tft',
@@ -14,6 +15,7 @@ export const DEVICES = [
     chip: 'ESP32-S3',
     desc: 'SX1262 LoRa, 480×222 TFT, physical keyboard, roller wheel + click, GPS. Full mesh UI with microSD config import/export.',
     link: 'https://lilygo.cc/',
+    image: '/devices/tlora-pager-tft.png',
   },
   {
     env: 'cardputer-cap',
@@ -21,6 +23,7 @@ export const DEVICES = [
     chip: 'ESP32-S3',
     desc: 'Keyboard-driven nav, microSD config, GPS, full mesh UI. Pairs with the M5Stack Cap LoRa/GPS module.',
     link: 'https://shop.m5stack.com/products/m5stack-cardputer-kit-w-m5stamps3',
+    image: '/devices/cardputer-cap.png',
   },
   {
     env: 'heltec-v4',
@@ -28,6 +31,7 @@ export const DEVICES = [
     chip: 'ESP32-S3',
     desc: 'Touch-first horizontal UI, GPS, full mesh UI. microSD is not enabled in this profile.',
     link: 'https://heltec.org/',
+    image: '/devices/heltec-v4-expansion-kit.png',
   },
   {
     env: 'heltec-v4-vertical',
@@ -35,5 +39,6 @@ export const DEVICES = [
     chip: 'ESP32-S3',
     desc: 'Same as Heltec V4 with a vertical-oriented UI layout.',
     link: 'https://heltec.org/',
+    image: '/devices/heltec-v4-expansion-kit.png',
   },
 ]

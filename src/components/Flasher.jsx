@@ -17,6 +17,7 @@ export default function Flasher() {
   const [env, setEnv] = useState(DEVICES[0].env)
   const [version, setVersion] = useState(null)
   const [versionStale, setVersionStale] = useState(false)
+  const [imageFailed, setImageFailed] = useState(false)
 
   useEffect(() => setSupported(serialSupported()), [])
 
@@ -38,6 +39,8 @@ export default function Flasher() {
     [env]
   )
 
+  useEffect(() => { setImageFailed(false) }, [device.env])
+
   const manifestUrl = useMemo(
     () => version ? manifestDataUrl(device, version) : null,
     [device.env, version]
@@ -48,9 +51,8 @@ export default function Flasher() {
       <div className="container">
         <h2>Flash from your browser</h2>
         <p>
-          Plug your ESP32-S3 device in over USB, pick its build profile below,
-          and the page will write the latest firmware directly. No{' '}
-          <span className="kbd">esptool</span>, no command line.
+          Plug your device in over USB, pick its build profile below,
+          and the page will write the latest firmware directly.
         </p>
         {!supported && (
           <div className="card" style={{ marginTop: 16, borderColor: 'var(--accent)' }}>
@@ -62,41 +64,53 @@ export default function Flasher() {
           </div>
         )}
         <div className="device flasher" style={{ marginTop: 28 }}>
-          <label className="flasher-select">
-            <span>Device</span>
-            <select value={env} onChange={e => setEnv(e.target.value)}>
-              {DEVICES.map(d => (
-                <option key={d.env} value={d.env}>
-                  {d.name} — env:{d.env}
-                </option>
-              ))}
-            </select>
-          </label>
-          <span className="desc">{device.desc}</span>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginTop: 12 }}>
-            {manifestUrl ? (
-              <>
-                <esp-web-install-button key={`${device.env}-${version}`} manifest={manifestUrl}>
-                  <button slot="activate" className="btn">Flash {version}</button>
-                  <span slot="unsupported" className="browser-note">
-                    Your browser does not support Web Serial. Use Chrome, Edge, or Opera on desktop.
-                  </span>
-                  <span slot="not-allowed" className="browser-note">
-                    Web Serial requires a secure (https://) connection.
-                  </span>
-                </esp-web-install-button>
-                <a className="btn btn-ghost" href={firmwareUrl(device.env, version)} download>
-                  Download .bin
-                </a>
-              </>
-            ) : (
-              <button className="btn" disabled>Checking latest release…</button>
+          <div className="flasher-main">
+            <label className="flasher-select">
+              <span>Device</span>
+              <select value={env} onChange={e => setEnv(e.target.value)}>
+                {DEVICES.map(d => (
+                  <option key={d.env} value={d.env}>
+                    {d.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginTop: 12 }}>
+              {manifestUrl ? (
+                <>
+                  <esp-web-install-button key={`${device.env}-${version}`} manifest={manifestUrl}>
+                    <button slot="activate" className="btn">Flash {version}</button>
+                    <span slot="unsupported" className="browser-note">
+                      Your browser does not support Web Serial. Use Chrome, Edge, or Opera on desktop.
+                    </span>
+                    <span slot="not-allowed" className="browser-note">
+                      Web Serial requires a secure (https://) connection.
+                    </span>
+                  </esp-web-install-button>
+                  <a className="btn btn-ghost" href={firmwareUrl(device.env, version)} download>
+                    Download .bin
+                  </a>
+                </>
+              ) : (
+                <button className="btn" disabled>Checking latest release…</button>
+              )}
+            </div>
+            {versionStale && (
+              <span className="browser-note" style={{ marginTop: 8 }}>
+                Couldn't reach the GitHub API — falling back to {FIRMWARE_VERSION}.
+              </span>
             )}
           </div>
-          {versionStale && (
-            <span className="browser-note" style={{ marginTop: 8 }}>
-              Couldn't reach the GitHub API — falling back to {FIRMWARE_VERSION}.
-            </span>
+          {device.image && !imageFailed && (
+            <div className="flasher-device-image" aria-hidden="true">
+              <img
+                key={device.env}
+                src={device.image}
+                alt={device.name}
+                loading="lazy"
+                onError={() => setImageFailed(true)}
+              />
+            </div>
           )}
         </div>
       </div>

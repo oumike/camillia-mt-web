@@ -34,7 +34,7 @@ export function manifestFor(device, version) {
   return {
     name: `Camillia-MT (${device.name})`,
     version,
-    new_install_prompt_erase: false,
+    new_install_prompt_erase: true,
     builds: [
       {
         chipFamily: 'ESP32-S3',

@@ -9,6 +9,7 @@ import Flasher from './components/Flasher.jsx'
 import Docs from './components/Docs.jsx'
 import Nav from './components/Nav.jsx'
 import Footer from './components/Footer.jsx'
+import AI from './components/AI.jsx'
 
 const STORAGE_KEY = 'camillia-theme'
 
@@ -43,6 +44,7 @@ export default function App() {
         <ThemePicker selected={theme} onChange={setTheme} />
         <Flasher />
         <Docs />
+        <AI />
       </main>
       <Footer />
     </>

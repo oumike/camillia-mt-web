@@ -9,7 +9,6 @@ export default function Devices() {
         <div className="grid" style={{ marginTop: 28 }}>
           {DEVICES.map(d => (
             <div className="device" key={d.env}>
-              <span className="env">env:{d.env}</span>
               <span className="name">
                 <a href={d.link} target="_blank" rel="noreferrer">{d.name}</a>
               </span>

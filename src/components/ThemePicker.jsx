@@ -7,9 +7,11 @@ function DevicePreview({ themeId, mode }) {
   // before the user commits to applying it across the whole site.
   const style = {
     '--bg-main': palette.bgMain,
+    '--status-top': palette.statusTop,
     '--status-bg': palette.statusBg,
     '--panel-bg': palette.panelBg,
     '--panel-alt': palette.panelAlt,
+    '--panel-strong': palette.panelStrong,
     '--divider': palette.divider,
     '--divider-hi': palette.dividerHi,
     '--accent': palette.accent,
@@ -23,24 +25,32 @@ function DevicePreview({ themeId, mode }) {
     '--input-top': palette.inputTop,
   }
   return (
-    <div className="preview" style={style}>
-      <div className="statusbar">
-        <span className="dot" />
-        <span>camillia · #general</span>
-        <span style={{ marginLeft: 'auto', opacity: 0.7 }}>87% · 19:42</span>
+    <div className="preview preview-fw" style={style}>
+      <div className="fw-statusbar">
+        <span className="fw-pill fw-pill-active">LongFast</span>
+        <span className="fw-stat">RF</span>
+        <span className="fw-stat">GPS 7</span>
+        <span className="fw-time">11:05</span>
+        <span className="fw-batt">
+          <span className="fw-batt-fill" />
+        </span>
+        <span className="fw-stat">100%</span>
       </div>
-      <div className="tabs">
-        <span className="tab active">GEN</span>
-        <span className="tab unread">RES</span>
-        <span className="tab">DM</span>
-        <span className="tab">ANN</span>
-        <span className="tab">CFG</span>
+      <div className="fw-channel">Michigan</div>
+      <div className="fw-log">
+        <div className="fw-row fw-rx"><span className="fw-ts">10:59</span> eastsidemesh.com join the signal chat and help us build up!</div>
+        <div className="fw-row fw-rx"><span className="fw-ts">11:00</span> [i] Hello Detroit!</div>
+        <div className="fw-row fw-rx"><span className="fw-ts">17:19</span> [RiJa] w</div>
+        <div className="fw-row fw-rx"><span className="fw-ts">17:19</span> [RiJa] hi</div>
+        <div className="fw-row fw-tx"><span className="fw-ts">11:03</span> Once you force yourself to move around, mornings get easier.</div>
       </div>
-      <div className="panel">
-        <div className="msg"><span className="nick">w0lf:</span>net check, anybody copy?</div>
-        <div className="msg"><span className="nick">RiCa:</span>5/9 from the ridge. clear skies up here.</div>
-        <div className="msg"><span className="nick">k7tx:</span>same, copying everyone full quieting.</div>
-        <div className="input">› type a message…</div>
+      <div className="fw-compose">Type message...</div>
+      <div className="fw-tabs">
+        <span className="fw-tab fw-tab-active">(DM)</span>
+        <span className="fw-tab">(C)FG</span>
+        <span className="fw-tab">(N)odes</span>
+        <span className="fw-tab">(L)ive</span>
+        <span className="fw-tab">(L)egend</span>
       </div>
     </div>
   )
@@ -92,8 +102,8 @@ export default function ThemePicker({ selected, onChange }) {
           <div>
             <h3 style={{ color: 'var(--text-main)' }}>Live preview</h3>
             <p>
-              The mock to the right uses the colors of the currently focused
-              theme exactly the way the firmware composes them at runtime.
+              The mock to the right mirrors the firmware channel screen layout
+              while using the currently focused theme colors.
             </p>
           </div>
           <DevicePreview themeId={selected.id} mode={selected.mode} />
