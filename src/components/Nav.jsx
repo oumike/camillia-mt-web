@@ -5,7 +5,7 @@ export default function Nav({ theme, onThemeChange }) {
     <header className="nav">
       <div className="nav-inner">
         <a href="#top" className="brand">
-          <img src="/favicon.svg" alt="" />
+          <img src={withBase('/favicon.svg')} alt="" />
           <span>Camillia-MT</span>
 
         </a>

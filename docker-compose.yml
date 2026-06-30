@@ -1,6 +1,9 @@
 services:
   web:
-    build: .
+    build:
+      context: .
+      args:
+        VITE_BASE_PATH: ${VITE_BASE_PATH:-/camillia/}
     image: camillia-mt-web:latest
     container_name: camillia-mt-web
     restart: unless-stopped

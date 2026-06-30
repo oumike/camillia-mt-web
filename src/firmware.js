@@ -1,3 +1,5 @@
+import { withBase } from './basePath'
+
 // Configuration for the in-browser flasher. FIRMWARE_VERSION is the fallback
 // used if the GitHub API call fails (rate limit, offline, etc.) — the live
 // version is fetched at page load via latestVersion().
@@ -8,7 +10,7 @@ export const REPO = 'oumike/camillia-mt'
 // to https://github.com/<repo>/releases/download/<tag>/<file>, adding CORS
 // headers so esp-web-tools' fetch() can read the .bin. GitHub release-assets
 // CDN itself does not send Access-Control-Allow-Origin.
-export const PROXY_BASE = '/firmware'
+export const PROXY_BASE = withBase('/firmware')
 
 // platformio env name -> release asset slug (matches .github/workflows/build.yml).
 const ASSET_SLUG = {

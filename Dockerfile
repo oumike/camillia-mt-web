@@ -9,6 +9,9 @@ COPY index.html vite.config.js ./
 COPY public ./public
 COPY src ./src
 
+ARG VITE_BASE_PATH=/
+ENV VITE_BASE_PATH=${VITE_BASE_PATH}
+
 RUN npm run build
 
 # --- Serve stage ---
