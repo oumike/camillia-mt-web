@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
+import { withBase } from '../basePath'
 
 const SHOTS = [
-  { src: '/screenshots/channel.png',  title: 'Channel view',        caption: 'IRC-style timeline with per-message timestamps and channel-colored nicks.' },
-  { src: '/screenshots/channels.png', title: 'Channel switcher',    caption: 'Drop-down between all eight LoRa channels, each independently keyed.' },
-  { src: '/screenshots/dm.png',       title: 'Direct messages',     caption: 'One-to-one conversations addressed by node ID, kept in their own tab.' },
-  { src: '/screenshots/compose.png',  title: 'Compose modal',       caption: 'Lightweight modal for sending — Enter to send, Bksp on empty to cancel.' },
-  { src: '/screenshots/nodes.png',    title: 'Node detail',         caption: 'Per-node info: long/short name, hops, SNR, last position and last heard.' },
-  { src: '/screenshots/live.png',     title: 'Live traffic log',    caption: 'Real-time RX/TX feed across every channel for debugging and demos.' },
-  { src: '/screenshots/config.png',   title: 'On-device config',    caption: 'Set theme, Wi-Fi config UI, GPS, notification sounds — no flashing required.' },
+  { src: withBase('/screenshots/channel.png'),  title: 'Channel view',        caption: 'IRC-style timeline with per-message timestamps and channel-colored nicks.' },
+  { src: withBase('/screenshots/channels.png'), title: 'Channel switcher',    caption: 'Drop-down between all eight LoRa channels, each independently keyed.' },
+  { src: withBase('/screenshots/dm.png'),       title: 'Direct messages',     caption: 'One-to-one conversations addressed by node ID, kept in their own tab.' },
+  { src: withBase('/screenshots/compose.png'),  title: 'Compose modal',       caption: 'Lightweight modal for sending — Enter to send, Bksp on empty to cancel.' },
+  { src: withBase('/screenshots/nodes.png'),    title: 'Node detail',         caption: 'Per-node info: long/short name, hops, SNR, last position and last heard.' },
+  { src: withBase('/screenshots/live.png'),     title: 'Live traffic log',    caption: 'Real-time RX/TX feed across every channel for debugging and demos.' },
+  { src: withBase('/screenshots/config.png'),   title: 'On-device config',    caption: 'Set theme, Wi-Fi config UI, GPS, notification sounds — no flashing required.' },
 ]
 
 export default function Screenshots() {

@@ -1,9 +1,11 @@
+import { withBase } from '../basePath'
+
 export default function Nav() {
   return (
     <header className="nav">
       <div className="nav-inner">
         <a href="#top" className="brand">
-          <img src="/favicon.svg" alt="" />
+          <img src={withBase('/favicon.svg')} alt="" />
           <span>Camillia-MT</span>
         </a>
         <div className="nav-spacer" />

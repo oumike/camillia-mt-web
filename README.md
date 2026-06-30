@@ -41,7 +41,36 @@ Or with compose:
 docker compose up --build
 ```
 
-Open <http://localhost:8080>.
+By default, compose builds with `VITE_BASE_PATH=/camillia/`, so open
+<http://localhost:8080/camillia/>.
+
+To build for a different base path:
+
+```bash
+VITE_BASE_PATH=/your-path/ docker compose up --build
+```
+
+### Reverse proxy at www.sumat.org/camillia
+
+If `www.sumat.org` is served by nginx and the container runs on the same host
+at `127.0.0.1:8080`:
+
+```nginx
+location = /camillia {
+  return 301 /camillia/;
+}
+
+location /camillia/ {
+  proxy_pass http://127.0.0.1:8080;
+  proxy_http_version 1.1;
+  proxy_set_header Host $host;
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+}
+```
+
+Then reload nginx and browse <https://www.sumat.org/camillia/>.
 
 ### A note on Web Serial
 
