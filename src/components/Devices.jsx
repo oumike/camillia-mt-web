@@ -5,8 +5,7 @@ export default function Devices() {
     <section id="devices">
       <div className="container">
         <h2>Supported devices</h2>
-        <p>Five build profiles, all ESP32-S3.</p>
-        <div className="grid" style={{ marginTop: 28 }}>
+        <div className="grid devices-grid" style={{ marginTop: 28 }}>
           {DEVICES.map(d => (
             <div className="device" key={d.env}>
               <span className="name">

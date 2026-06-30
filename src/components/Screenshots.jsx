@@ -28,9 +28,6 @@ export default function Screenshots() {
         <h2>On the device</h2>
         <p>
           Captures from a LilyGo T-Deck running the Crimson Blue Dark theme.
-          The interface is keyboard-first but works equally well with the
-          trackball, roller wheel, or touch — same primitives across every
-          build profile.
         </p>
         <div className="shots-grid">
           {SHOTS.map(s => (

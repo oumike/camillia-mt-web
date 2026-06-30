@@ -3,13 +3,13 @@ import { THEMES, applyTheme } from './themes.js'
 import Hero from './components/Hero.jsx'
 import Features from './components/Features.jsx'
 import Devices from './components/Devices.jsx'
-import ThemePicker from './components/ThemePicker.jsx'
 import Screenshots from './components/Screenshots.jsx'
 import Flasher from './components/Flasher.jsx'
 import Docs from './components/Docs.jsx'
 import Nav from './components/Nav.jsx'
 import Footer from './components/Footer.jsx'
 import AI from './components/AI.jsx'
+import License from './components/License.jsx'
 
 const STORAGE_KEY = 'camillia-theme'
 
@@ -35,16 +35,16 @@ export default function App() {
 
   return (
     <>
-      <Nav />
+      <Nav theme={theme} onThemeChange={setTheme} />
       <main>
         <Hero />
-        <Features />
+        {/* <Features /> */}
         <Devices />
         <Screenshots />
-        <ThemePicker selected={theme} onChange={setTheme} />
         <Flasher />
         <Docs />
         <AI />
+        <License />
       </main>
       <Footer />
     </>

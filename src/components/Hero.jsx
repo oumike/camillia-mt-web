@@ -3,11 +3,10 @@ export default function Hero() {
     <section id="top" className="hero">
       <div className="container">
         <h1>
-          Mesh radio firmware <br />
-          with <span className="accent">a personality.</span>
+          Camillia MT
         </h1>
         <p className="lede">
-          Camillia-MT is a Meshtastic-compatible firmware for ESP32-S3 handheld
+          A Meshtastic-compatible firmware for ESP32-S3 handheld
           LoRa devices. Eight named channels, a browser-based config UI, full
           YAML import/export, GPS, direct messages, and twelve hand-tuned UI
           themes.
