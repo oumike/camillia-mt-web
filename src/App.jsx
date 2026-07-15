@@ -9,7 +9,6 @@ import Docs from './components/Docs.jsx'
 import Nav from './components/Nav.jsx'
 import Footer from './components/Footer.jsx'
 import AI from './components/AI.jsx'
-import License from './components/License.jsx'
 
 const STORAGE_KEY = 'camillia-theme'
 
@@ -44,7 +43,6 @@ export default function App() {
         <Flasher />
         <Docs />
         <AI />
-        <License />
       </main>
       <Footer />
     </>
