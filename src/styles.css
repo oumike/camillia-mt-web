@@ -91,7 +91,7 @@ p { line-height: 1.55; color: var(--text-dim); }
 }
 .hero h1 .accent { color: var(--accent); }
 .hero p.lede { font-size: 1.15rem; max-width: 700px; }
-.hero-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 22px; }
+.hero-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 22px; justify-content: center; }
 
 .btn {
   display: inline-flex; align-items: center; gap: 8px;

@@ -8,6 +8,7 @@
 #
 #   ./update-container.sh          rebuild from the current checkout and recreate
 #   ./update-container.sh --pull   git pull first, then rebuild and recreate
+#   ./update-container.sh --no-prune  skip image prune step
 #
 set -euo pipefail
 
@@ -24,8 +25,27 @@ else
   exit 1
 fi
 
+# Parse supported flags.
+DO_PULL=0
+DO_PRUNE=1
+for arg in "$@"; do
+  case "$arg" in
+    --pull)
+      DO_PULL=1
+      ;;
+    --no-prune)
+      DO_PRUNE=0
+      ;;
+    *)
+      echo "error: unknown option '$arg'" >&2
+      echo "usage: ./update-container.sh [--pull] [--no-prune]" >&2
+      exit 1
+      ;;
+  esac
+done
+
 # Optionally pull the latest source before building.
-if [[ "${1:-}" == "--pull" ]]; then
+if [[ "$DO_PULL" -eq 1 ]]; then
   echo "==> Pulling latest source"
   git pull --ff-only
 fi
@@ -38,8 +58,14 @@ echo "==> Recreating container"
 # the build step is ever removed; up only recreates if the image changed.
 $COMPOSE up -d
 
-echo "==> Pruning dangling images"
-docker image prune -f >/dev/null
+if [[ "$DO_PRUNE" -eq 1 ]]; then
+  echo "==> Pruning dangling images (best effort; 20s timeout)"
+  if ! timeout 20s docker image prune -f >/dev/null 2>&1; then
+    echo "warn: skipping prune (already running, timed out, or daemon busy)" >&2
+  fi
+else
+  echo "==> Skipping image prune (--no-prune)"
+fi
 
 echo "==> Status"
 $COMPOSE ps
