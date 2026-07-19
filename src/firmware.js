@@ -58,6 +58,7 @@ export function manifestDataUrl(device, version) {
 // Ask GitHub for the latest release tag. Returns the tag string (e.g. "v2.5.1").
 // api.github.com serves CORS headers, so this works from the browser. Throws
 // on network errors / rate limit — callers should fall back to FIRMWARE_VERSION.
+// GitHub's /releases/latest excludes prereleases, so this only returns stable.
 export async function latestVersion() {
   const res = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`, {
     headers: { Accept: 'application/vnd.github+json' },
@@ -66,4 +67,22 @@ export async function latestVersion() {
   const data = await res.json()
   if (!data.tag_name) throw new Error('No tag_name in release response')
   return data.tag_name
+}
+
+// Ask GitHub for the newest *alpha* (prerelease) tag. /releases/latest skips
+// prereleases, so we list recent releases and pick the first flagged
+// prerelease (the list is newest-first). Throws if none exist or on error —
+// callers should treat "no alpha available" gracefully.
+export async function latestAlphaVersion() {
+  const res = await fetch(
+    `https://api.github.com/repos/${REPO}/releases?per_page=30`,
+    { headers: { Accept: 'application/vnd.github+json' } },
+  )
+  if (!res.ok) throw new Error(`GitHub API ${res.status}`)
+  const data = await res.json()
+  const alpha = Array.isArray(data)
+    ? data.find(r => r.prerelease && !r.draft && r.tag_name)
+    : null
+  if (!alpha) throw new Error('No alpha release found')
+  return alpha.tag_name
 }
