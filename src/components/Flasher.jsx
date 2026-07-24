@@ -4,7 +4,6 @@ import { DEVICES } from '../devices.js'
 import {
   FIRMWARE_VERSION,
   latestVersion,
-  latestAlphaVersion,
   manifestDataUrl,
   firmwareUrl,
 } from '../firmware.js'
@@ -16,12 +15,8 @@ function serialSupported() {
 export default function Flasher() {
   const [supported, setSupported] = useState(true)
   const [env, setEnv] = useState(DEVICES[0].env)
-  const [channel, setChannel] = useState('stable')
   const [version, setVersion] = useState(null)
   const [versionStale, setVersionStale] = useState(false)
-  // Alpha channel: 'loading' until the API answers, then 'ready' | 'none'.
-  const [alphaVersion, setAlphaVersion] = useState(null)
-  const [alphaState, setAlphaState] = useState('loading')
   const [imageFailed, setImageFailed] = useState(false)
 
   useEffect(() => setSupported(serialSupported()), [])
@@ -36,11 +31,6 @@ export default function Flasher() {
           setVersionStale(true)
         }
       })
-    latestAlphaVersion()
-      .then(tag => {
-        if (!cancelled) { setAlphaVersion(tag); setAlphaState('ready') }
-      })
-      .catch(() => { if (!cancelled) setAlphaState('none') })
     return () => { cancelled = true }
   }, [])
 
@@ -51,13 +41,9 @@ export default function Flasher() {
 
   useEffect(() => { setImageFailed(false) }, [device.env])
 
-  // Which version the selected channel flashes. Alpha falls back to null
-  // (no build available) so the button disables rather than 404s.
-  const activeVersion = channel === 'alpha' ? alphaVersion : version
-
   const manifestUrl = useMemo(
-    () => activeVersion ? manifestDataUrl(device, activeVersion) : null,
-    [device.env, activeVersion]
+    () => version ? manifestDataUrl(device, version) : null,
+    [device.env, version]
   )
 
   return (
@@ -89,32 +75,11 @@ export default function Flasher() {
                 ))}
               </select>
             </label>
-            <label className="flasher-select" style={{ marginTop: 12 }}>
-              <span>Channel</span>
-              <select value={channel} onChange={e => setChannel(e.target.value)}>
-                <option value="stable">Stable (recommended)</option>
-                <option value="alpha">Alpha (bleeding-edge)</option>
-              </select>
-            </label>
-            {channel === 'alpha' && (
-              <div className="card" style={{ marginTop: 12, borderColor: 'var(--accent)' }}>
-                <strong>Alpha builds are unstable.</strong>{' '}
-                These are pre-release test builds cut straight from the{' '}
-                <span className="kbd">alpha</span> branch and may be broken.
-                Use the Stable channel unless you're testing.
-              </div>
-            )}
             <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginTop: 12 }}>
-              {channel === 'alpha' && alphaState === 'loading' ? (
-                <button className="btn" disabled>Checking latest alpha…</button>
-              ) : channel === 'alpha' && alphaState === 'none' ? (
-                <span className="browser-note">
-                  No alpha build is available right now.
-                </span>
-              ) : manifestUrl ? (
+              {manifestUrl ? (
                 <>
-                  <esp-web-install-button key={`${device.env}-${activeVersion}`} manifest={manifestUrl}>
-                    <button slot="activate" className="btn">Flash {activeVersion}</button>
+                  <esp-web-install-button key={`${device.env}-${version}`} manifest={manifestUrl}>
+                    <button slot="activate" className="btn">Flash {version}</button>
                     <span slot="unsupported" className="browser-note">
                       Your browser does not support Web Serial. Use Chrome, Edge, or Opera on desktop.
                     </span>
@@ -122,7 +87,7 @@ export default function Flasher() {
                       Web Serial requires a secure (https://) connection.
                     </span>
                   </esp-web-install-button>
-                  <a className="btn btn-ghost" href={firmwareUrl(device.env, activeVersion)} download>
+                  <a className="btn btn-ghost" href={firmwareUrl(device.env, version)} download>
                     Download .bin
                   </a>
                 </>
@@ -130,7 +95,7 @@ export default function Flasher() {
                 <button className="btn" disabled>Checking latest release…</button>
               )}
             </div>
-            {channel === 'stable' && versionStale && (
+            {versionStale && (
               <span className="browser-note" style={{ marginTop: 8 }}>
                 Couldn't reach the GitHub API — falling back to {FIRMWARE_VERSION}.
               </span>
