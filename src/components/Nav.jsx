@@ -7,7 +7,7 @@ export default function Nav({ theme, onThemeChange }) {
       <div className="nav-inner">
         <a href="#top" className="brand">
           <img src={withBase('/favicon.svg')} alt="" />
-          <span>Camillia-MT</span>
+          <span>Camillia for Meshtastic</span>
         </a>
         <div className="nav-spacer" />
         <ThemeMenu selected={theme} onChange={onThemeChange} />
