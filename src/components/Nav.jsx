@@ -13,7 +13,6 @@ export default function Nav({ theme, onThemeChange }) {
         <ThemeMenu selected={theme} onChange={onThemeChange} />
         <a href="#devices">Devices</a>
         <a href="#screenshots">Screenshots</a>
-        <a href="#themes">Themes</a>
         <a href="#flash">Flash</a>
         <a href="https://github.com/oumike/camillia-mt/blob/main/LICENSE.md" target="_blank" rel="noreferrer">License</a>
         <a href="https://github.com/oumike/camillia-mt/releases" target="_blank" rel="noreferrer">Releases</a>

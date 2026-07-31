@@ -2,13 +2,16 @@ import { useEffect, useState } from 'react'
 import { withBase } from '../basePath'
 
 const SHOTS = [
-  { src: withBase('/screenshots/channel.png'),  title: 'Channel view',        caption: 'IRC-style timeline with per-message timestamps and channel-colored nicks.' },
-  { src: withBase('/screenshots/channels.png'), title: 'Channel switcher',    caption: 'Drop-down between all eight LoRa channels, each independently keyed.' },
-  { src: withBase('/screenshots/dm.png'),       title: 'Direct messages',     caption: 'One-to-one conversations addressed by node ID, kept in their own tab.' },
-  { src: withBase('/screenshots/compose.png'),  title: 'Compose modal',       caption: 'Lightweight modal for sending — Enter to send, Bksp on empty to cancel.' },
-  { src: withBase('/screenshots/nodes.png'),    title: 'Node detail',         caption: 'Per-node info: long/short name, hops, SNR, last position and last heard.' },
-  { src: withBase('/screenshots/live.png'),     title: 'Live traffic log',    caption: 'Real-time RX/TX feed across every channel for debugging and demos.' },
-  { src: withBase('/screenshots/config.png'),   title: 'On-device config',    caption: 'Set theme, Wi-Fi config UI, GPS, notification sounds — no flashing required.' },
+  { src: withBase('/screenshots/channel.png'),      title: 'Outline chat view',        caption: 'Outline chat style: IRC-style timeline with per-message timestamps and channel-colored nicks.' },
+  { src: withBase('/screenshots/bubbles.png'),      title: 'Bubble chat style',   caption: 'Same timeline as bubbles — your messages right-aligned in the accent color.' },
+  { src: withBase('/screenshots/channels.png'),     title: 'Channel switcher',    caption: 'Drop-down between all eight LoRa channels, each independently keyed.' },
+  { src: withBase('/screenshots/dm.png'),           title: 'Direct messages',     caption: 'One-to-one conversations addressed by node ID, kept in their own tab.' },
+  { src: withBase('/screenshots/compose.png'),      title: 'Compose messages',       caption: 'Lightweight modal for sending — Enter to send, Bksp on empty to cancel.' },
+  { src: withBase('/screenshots/emoji.png'),        title: 'Emoji picker',        caption: 'Grid picker while composing — arrows to move, Enter to insert, Bksp to close.' },
+  { src: withBase('/screenshots/nodes.png'),        title: 'Node detail',         caption: 'Per-node info: long/short name, hops, SNR, last position and last heard.' },
+  { src: withBase('/screenshots/node-actions.png'), title: 'Node actions',        caption: 'Traceroute, DM, favorite, request info or position, or ignore a node.' },
+  { src: withBase('/screenshots/live.png'),         title: 'Live traffic log',    caption: 'Real-time RX/TX feed across every channel for debugging and demos.' },
+  { src: withBase('/screenshots/config.png'),       title: 'On-device config',    caption: 'Set theme, Wi-Fi config UI, GPS, notification sounds — no flashing required.' },
 ]
 
 export default function Screenshots() {
@@ -28,7 +31,7 @@ export default function Screenshots() {
       <div className="container">
         <h2>On the device</h2>
         <p>
-          Captures from a LilyGo T-Deck running the Crimson Blue Dark theme.
+          Captures from a LilyGo T-Deck running the Camillia Dark theme.
           The interface is keyboard-first but works equally well with the
           trackball, roller wheel, or touch — same primitives across every
           build profile.
