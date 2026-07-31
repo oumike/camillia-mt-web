@@ -3,7 +3,7 @@ export default function Hero() {
     <section id="top" className="hero">
       <div className="container">
         <h1>
-          Camillia MT
+          Camillia for Meshtastic
         </h1>
         <p className="lede">
           A Meshtastic-compatible firmware for ESP32-S3 handheld
