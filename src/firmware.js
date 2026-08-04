@@ -19,6 +19,7 @@ const ASSET_SLUG = {
   'cardputer-cap': 'cardputer-cap',
   'heltec-v4': 'heltec',
   'heltec-v4-vertical': 'heltec-vertical',
+  'mesh-deck': 'mesh-deck',
 }
 
 export function firmwareUrl(env, version) {

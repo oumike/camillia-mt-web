@@ -43,4 +43,12 @@ export const DEVICES = [
     link: 'https://heltec.org/',
     image: withBase('/devices/heltec-v4-expansion-kit.png'),
   },
+  {
+    env: 'mesh-deck',
+    name: 'Attaky Mesh Deck',
+    chip: 'ESP32-S3',
+    desc: 'SX1262 LoRa, 320×240 touch display, 48-key QWERTY, D-pad, GPS, MAX17048 fuel gauge. No microSD — config, DM history and the node archive live in internal flash.',
+    link: 'https://shop.attaky.com/',
+    image: withBase('/devices/mesh-deck.jpg'),
+  },
 ]
