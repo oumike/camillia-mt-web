@@ -5,6 +5,7 @@ import { withBase } from './basePath'
 export const DEVICES = [
   {
     env: 'tdeck',
+    buy: { seller: 'Rokland', href: 'https://store.rokland.com/products/lilygo-t-deck-portable-microcontroller-programmer-lora-915-mhz-h642' },
     name: 'LilyGo T-Deck',
     chip: 'ESP32-S3',
     desc: 'SX1262 LoRa, 320×240 display, physical keyboard, trackball, L76K GPS. Full mesh UI with microSD config import/export.',
@@ -13,6 +14,7 @@ export const DEVICES = [
   },
   {
     env: 'tlora-pager-tft',
+    buy: { seller: 'Rokland', href: 'https://store.rokland.com/products/lilygo-t-lora-pager-us-915-mhz-lora-esp32-s3-handheld-aiot-programmable-development-device-k257-01' },
     name: 'LilyGo T-Lora Pager TFT',
     chip: 'ESP32-S3',
     desc: 'SX1262 LoRa, 480×222 TFT, physical keyboard, roller wheel + click, GPS. Full mesh UI with microSD config import/export.',
@@ -21,6 +23,7 @@ export const DEVICES = [
   },
   {
     env: 'cardputer-cap',
+    buy: { seller: 'M5Stack', href: 'https://shop.m5stack.com/products/m5stack-cardputer-kit-w-m5stamps3' },
     name: 'M5Stack Cardputer + Cap LoRa/GPS',
     chip: 'ESP32-S3',
     desc: 'Keyboard-driven nav, microSD config, GPS, full mesh UI. Pairs with the M5Stack Cap LoRa/GPS module.',
@@ -29,6 +32,7 @@ export const DEVICES = [
   },
   {
     env: 'heltec-v4',
+    buy: { seller: 'Rokland', href: 'https://store.rokland.com/products/heltec-wifi-lora-32v4-esp32s3-sx1262-lora-node-meshtastic-lorawan' },
     name: 'Heltec WiFi LoRa 32 V4 + TFT',
     chip: 'ESP32-S3',
     desc: 'Touch-first horizontal UI, GPS, full mesh UI. microSD is not enabled in this profile.',
@@ -37,6 +41,7 @@ export const DEVICES = [
   },
   {
     env: 'heltec-v4-vertical',
+    buy: { seller: 'Rokland', href: 'https://store.rokland.com/products/heltec-wifi-lora-32v4-esp32s3-sx1262-lora-node-meshtastic-lorawan' },
     name: 'Heltec WiFi LoRa 32 V4 + TFT (vertical)',
     chip: 'ESP32-S3',
     desc: 'Same as Heltec V4 with a vertical-oriented UI layout.',
@@ -45,6 +50,7 @@ export const DEVICES = [
   },
   {
     env: 'mesh-deck',
+    buy: { seller: 'Attaky', href: 'https://shop.attaky.com/' },
     name: 'Attaky Mesh Deck',
     chip: 'ESP32-S3',
     desc: 'SX1262 LoRa, 320×240 touch display, 48-key QWERTY, D-pad, GPS, MAX17048 fuel gauge. No microSD — config, DM history and the node archive live in internal flash.',

@@ -51,6 +51,14 @@ const PRESETS = [
   { id: 'winterchill', name: 'Winter Chill',
     dark:  anchors([0x15,0x1F,0x2B], [0x1C,0x2A,0x3A], [0x24,0x36,0x49], [0x8F,0xB3,0xD9]),
     light: anchors([0xF1,0xF7,0xFC], [0xFF,0xFF,0xFF], [0xDF,0xEB,0xF6], [0x5C,0x86,0xB2]) },
+  // Dark only — the firmware ships no light variant for this one.
+  { id: 'camellia-black', name: 'Camillia Black', darkOnly: true,
+    dark: anchors([0x00,0x00,0x00], [0x00,0x00,0x00], [0x0A,0x0A,0x0A], [0xFF,0xFF,0xFF]),
+    // main_lvgl.cpp special-cases this theme so the accent blend never lifts
+    // black to grey. On the web the failure is the mirror image: the derived
+    // divider lands on near-black and every panel edge vanishes against the
+    // page. Lift that one value; leave the rest of the derivation alone.
+    fix: p => ({ ...p, divider: rgb565(0x26, 0x26, 0x26) }) },
 ]
 
 function toHex(c) {
@@ -95,12 +103,23 @@ function derivePalette({ bgMain, panelBg, panelAlt, accent }, isLight) {
   }
 }
 
-export const THEMES = PRESETS.map(p => ({
-  id: p.id,
-  name: p.name,
-  dark:  derivePalette(p.dark,  false),
-  light: derivePalette(p.light, true),
-}))
+export const THEMES = PRESETS.map(p => {
+  const fix = p.fix || (x => x)
+  const dark = fix(derivePalette(p.dark, false))
+  return {
+    id: p.id,
+    name: p.name,
+    darkOnly: !!p.darkOnly,
+    dark,
+    // A dark-only theme answers "light" with its dark palette, so callers
+    // never have to special-case it.
+    light: p.darkOnly ? dark : fix(derivePalette(p.light, true)),
+  }
+})
+
+export function isDarkOnly(themeId) {
+  return !!THEMES.find(t => t.id === themeId)?.darkOnly
+}
 
 export const THEME_VAR_KEYS = [
   'bgMain', 'statusTop', 'statusBg', 'panelBg', 'panelAlt', 'panelStrong',
@@ -110,17 +129,28 @@ export const THEME_VAR_KEYS = [
 
 export function applyTheme(rootEl, themeId, mode) {
   const theme = THEMES.find(t => t.id === themeId) || THEMES[0]
-  const palette = (mode === 'light') ? theme.light : theme.dark
+  const effectiveMode = theme.darkOnly ? 'dark' : mode
+  const palette = (effectiveMode === 'light') ? theme.light : theme.dark
   for (const key of THEME_VAR_KEYS) {
     rootEl.style.setProperty('--' + camelToKebab(key), toHex(palette[key]))
   }
-  rootEl.dataset.theme = themeId
-  rootEl.dataset.mode = mode
+  rootEl.dataset.theme = theme.id
+  rootEl.dataset.mode = effectiveMode
 }
 
 export function paletteHex(palette) {
   const out = {}
   for (const key of THEME_VAR_KEYS) out[key] = toHex(palette[key])
+  return out
+}
+
+// Same palette as CSS custom properties, ready to spread into a React style
+// prop. Lets one subtree render in a theme other than the document's.
+export function paletteStyle(palette) {
+  const out = {}
+  for (const key of THEME_VAR_KEYS) {
+    out['--' + camelToKebab(key)] = toHex(palette[key])
+  }
   return out
 }
 

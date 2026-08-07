@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import { THEMES, applyTheme } from './themes.js'
+import { THEMES, applyTheme, isDarkOnly } from './themes.js'
 import Hero from './components/Hero.jsx'
 import Features from './components/Features.jsx'
 import Devices from './components/Devices.jsx'
 import Screenshots from './components/Screenshots.jsx'
+import ThemeRail from './components/ThemeRail.jsx'
 import Flasher from './components/Flasher.jsx'
 import Docs from './components/Docs.jsx'
 import Nav from './components/Nav.jsx'
@@ -32,14 +33,28 @@ export default function App() {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(theme)) } catch {}
   }, [theme])
 
+  // Dark-only themes keep the stored preference but always render dark, so
+  // switching back to a two-mode theme restores what the user last chose.
+  const modeLocked = isDarkOnly(theme.id)
+  const mode = modeLocked ? 'dark' : theme.mode
+  const setMode = next => setTheme(t => ({ ...t, mode: next }))
+
   return (
     <>
-      <Nav theme={theme} onThemeChange={setTheme} />
-      <main>
+      <a className="skip-link" href="#main">Skip to content</a>
+      <Nav mode={mode} modeLocked={modeLocked} onModeChange={setMode} />
+      <main id="main">
         <Hero />
-        {/* <Features /> */}
+        <Features />
         <Devices />
         <Screenshots />
+        <ThemeRail
+          theme={theme}
+          mode={mode}
+          modeLocked={modeLocked}
+          onModeChange={setMode}
+          onThemeChange={setTheme}
+        />
         <Flasher />
         <Docs />
         <AI />

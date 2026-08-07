@@ -1,15 +1,25 @@
-
 export default function AI() {
-    return (
-        <section id="ai">
-                  <div className="container">
-            <h2>AI partner</h2>
-            <p>
-            I've been a developer professionally since about 2001 working on a large list of technologies.  I've created this project in my spare time so I could contribute to my favorite new hobby (mesh networking) and try out coding with an AI partner (Claude).  Lots of this code has been touched by AI but as I go through the process I'm reviewing the code.  AI is tool, and like any other tool can be used well or used poorly.
-
-            This project is a bit more than a proof of concept but not something that has any commercial value.  I'm doing this for fun and to learn.  Feel free to contribute, use or ignore.
-            </p>
-            </div>
-        </section>
-    )
-}   
+  return (
+    <section id="ai">
+      <div className="container">
+        <p className="eyebrow">Colophon</p>
+        <h2>Built in my spare time, with an AI partner</h2>
+        <div className="measure">
+          <p>
+            I've been a developer professionally since about 2001, across a long
+            list of technologies. I built this in my spare time to contribute to
+            my favorite new hobby — mesh networking — and to see what pairing
+            with an AI partner (Claude) is actually like. A lot of this code has
+            been touched by AI, and I review it as I go. AI is a tool, and like
+            any other tool it can be used well or used poorly.
+          </p>
+          <p>
+            This project is a bit more than a proof of concept, but it has no
+            commercial ambitions. I'm doing it for fun and to learn. Contribute,
+            use it, or ignore it.
+          </p>
+        </div>
+      </div>
+    </section>
+  )
+}

@@ -2,17 +2,36 @@ import { DEVICES } from '../devices.js'
 
 export default function Devices() {
   return (
-    <section id="devices">
+    <section id="devices" className="band">
       <div className="container">
-        <h2>Supported devices</h2>
-        <div className="grid devices-grid" style={{ marginTop: 28 }}>
+        <p className="eyebrow">Hardware</p>
+        <h2>Six boards, one firmware</h2>
+        <p className="measure">
+          Every profile below is built from the same source tree. Pick your
+          board in the flasher and it writes the matching build. Board names go
+          to the manufacturer; buy links go to Rokland where they stock it.
+        </p>
+
+        <div className="grid device-grid">
           {DEVICES.map(d => (
-            <div className="device" key={d.env}>
-              <span className="name">
-                <a href={d.link} target="_blank" rel="noreferrer">{d.name}</a>
-              </span>
-              <span className="desc">{d.desc}</span>
-            </div>
+            <article className="panel device" key={d.env}>
+              <header className="device-head">
+                <h3>
+                  <a href={d.link} target="_blank" rel="noreferrer">{d.name}</a>
+                </h3>
+                <span className="device-env">{d.env}</span>
+              </header>
+              <p>{d.desc}</p>
+              <p className="device-foot">
+                <span className="device-chip">{d.chip}</span>
+                {d.buy && (
+                  <a className="device-buy" href={d.buy.href}
+                     target="_blank" rel="noreferrer">
+                    Buy at {d.buy.seller} <span aria-hidden="true">→</span>
+                  </a>
+                )}
+              </p>
+            </article>
           ))}
         </div>
       </div>

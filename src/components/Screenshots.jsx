@@ -1,58 +1,112 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { withBase } from '../basePath'
 
-const SHOTS = [
-  { src: withBase('/screenshots/channel.png'),      title: 'Outline chat view',        caption: 'Outline chat style: IRC-style timeline with per-message timestamps and channel-colored nicks.' },
-  { src: withBase('/screenshots/bubbles.png'),      title: 'Bubble chat style',   caption: 'Same timeline as bubbles — your messages right-aligned in the accent color.' },
-  { src: withBase('/screenshots/channels.png'),     title: 'Channel switcher',    caption: 'Drop-down between all eight LoRa channels, each independently keyed.' },
-  { src: withBase('/screenshots/dm.png'),           title: 'Direct messages',     caption: 'One-to-one conversations addressed by node ID, kept in their own tab.' },
-  { src: withBase('/screenshots/compose.png'),      title: 'Compose messages',       caption: 'Lightweight modal for sending — Enter to send, Bksp on empty to cancel.' },
-  { src: withBase('/screenshots/emoji.png'),        title: 'Emoji picker',        caption: 'Grid picker while composing — arrows to move, Enter to insert, Bksp to close.' },
-  { src: withBase('/screenshots/nodes.png'),        title: 'Node detail',         caption: 'Per-node info: long/short name, hops, SNR, last position and last heard.' },
-  { src: withBase('/screenshots/node-actions.png'), title: 'Node actions',        caption: 'Traceroute, DM, favorite, request info or position, or ignore a node.' },
-  { src: withBase('/screenshots/live.png'),         title: 'Live traffic log',    caption: 'Real-time RX/TX feed across every channel for debugging and demos.' },
-  { src: withBase('/screenshots/config.png'),       title: 'On-device config',    caption: 'Set theme, Wi-Fi config UI, GPS, notification sounds — no flashing required.' },
+const LEAD = [
+  { src: withBase('/screenshots/channel.png'), title: 'Channel view',     caption: 'An IRC-style timeline: per-message timestamps, channel-colored nicks, and the key legend always in reach.' },
+  { src: withBase('/screenshots/nodes.png'),   title: 'Node detail',      caption: 'Long and short name, hops, SNR, last position, and last heard — for all 89 nodes in range.' },
+  { src: withBase('/screenshots/config.png'),  title: 'On-device config', caption: 'Theme, Wi-Fi config UI, GPS, and notification sounds, changed on the device without reflashing.' },
 ]
+
+const REST = [
+  { src: withBase('/screenshots/bubbles.png'),      title: 'Bubble chat',      caption: 'The same timeline as bubbles, with your messages right-aligned in the accent color.' },
+  { src: withBase('/screenshots/channels.png'),     title: 'Channel switcher', caption: 'Move between all eight channels, each independently keyed.' },
+  { src: withBase('/screenshots/dm.png'),           title: 'Direct messages',  caption: 'One-to-one conversations addressed by node ID, kept in their own tab.' },
+  { src: withBase('/screenshots/compose.png'),      title: 'Compose',          caption: 'Enter sends, Backspace on an empty line cancels.' },
+  { src: withBase('/screenshots/emoji.png'),        title: 'Emoji picker',     caption: 'Arrows to move, Enter to insert, Backspace to close.' },
+  { src: withBase('/screenshots/node-actions.png'), title: 'Node actions',     caption: 'Traceroute, DM, favorite, request info or position, or ignore a node.' },
+  { src: withBase('/screenshots/live.png'),         title: 'Live traffic',     caption: 'Real-time RX and TX across every channel, for debugging and demos.' },
+]
+
+const FOCUSABLE = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+
+function Shot({ shot, onOpen, size }) {
+  return (
+    <figure className={`shot shot-${size}`}>
+      <button
+        className="shot-open"
+        type="button"
+        onClick={() => onOpen(shot)}
+        aria-label={`Enlarge ${shot.title}`}
+      >
+        <img src={shot.src} alt={shot.title} loading="lazy" width="320" height="240" />
+      </button>
+      <figcaption>
+        <strong>{shot.title}</strong>
+        <span>{shot.caption}</span>
+      </figcaption>
+    </figure>
+  )
+}
 
 export default function Screenshots() {
   const [activeShot, setActiveShot] = useState(null)
+  const panelRef = useRef(null)
+  const closeRef = useRef(null)
+  const returnRef = useRef(null)
 
+  function open(shot) {
+    returnRef.current = document.activeElement
+    setActiveShot(shot)
+  }
+
+  function close() {
+    setActiveShot(null)
+  }
+
+  // Lock the page behind the dialog, trap Tab inside it, and hand focus back
+  // to the thumbnail that opened it.
   useEffect(() => {
     if (!activeShot) return undefined
+
+    const { overflow } = document.body.style
+    document.body.style.overflow = 'hidden'
+    closeRef.current?.focus()
+
     const onKeyDown = e => {
-      if (e.key === 'Escape') setActiveShot(null)
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        close()
+        return
+      }
+      if (e.key !== 'Tab') return
+      const items = panelRef.current?.querySelectorAll(FOCUSABLE)
+      if (!items?.length) return
+      const first = items[0]
+      const last = items[items.length - 1]
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault()
+        first.focus()
+      }
     }
+
     window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
+    return () => {
+      window.removeEventListener('keydown', onKeyDown)
+      document.body.style.overflow = overflow
+      returnRef.current?.focus?.()
+    }
   }, [activeShot])
 
   return (
     <section id="screenshots">
       <div className="container">
-        <h2>On the device</h2>
-        <p>
-          Captures from a LilyGo T-Deck running the Camillia Dark theme.
-          The interface is keyboard-first but works equally well with the
-          trackball, roller wheel, or touch — same primitives across every
-          build profile.
+        <p className="eyebrow">On the device</p>
+        <h2>Sample Screens</h2>
+        <p className="measure">
+          Captured from a LilyGo T-Deck running the Camillia dark theme. The
+          same screens render on every board, driven by keyboard, trackball,
+          roller wheel, or touch.
         </p>
-        <div className="shots-grid">
-          {SHOTS.map(s => (
-            <figure key={s.src} className="shot">
-              <button
-                className="shot-open"
-                type="button"
-                onClick={() => setActiveShot(s)}
-                aria-label={`Open larger image: ${s.title}`}
-              >
-                <img src={s.src} alt={s.title} loading="lazy" width="320" height="240" />
-              </button>
-              <figcaption>
-                <strong>{s.title}</strong>
-                <span>{s.caption}</span>
-              </figcaption>
-            </figure>
-          ))}
+
+        <div className="shots-lead">
+          {LEAD.map(s => <Shot key={s.src} shot={s} onOpen={open} size="lead" />)}
+        </div>
+
+        <div className="shots-rest">
+          {REST.map(s => <Shot key={s.src} shot={s} onOpen={open} size="rest" />)}
         </div>
 
         {activeShot && (
@@ -61,23 +115,18 @@ export default function Screenshots() {
             role="dialog"
             aria-modal="true"
             aria-label={activeShot.title}
-            onClick={() => setActiveShot(null)}
+            onClick={close}
           >
-            <div className="shot-lightbox-panel" onClick={e => e.stopPropagation()}>
+            <div className="shot-lightbox-panel" ref={panelRef} onClick={e => e.stopPropagation()}>
               <button
                 type="button"
+                ref={closeRef}
                 className="shot-lightbox-close"
-                onClick={() => setActiveShot(null)}
-                aria-label="Close screenshot preview"
+                onClick={close}
               >
                 Close
               </button>
-              <img
-                src={activeShot.src}
-                alt={activeShot.title}
-                width="1280"
-                height="960"
-              />
+              <img src={activeShot.src} alt={activeShot.title} width="1280" height="960" />
               <div className="shot-lightbox-caption">
                 <strong>{activeShot.title}</strong>
                 <span>{activeShot.caption}</span>

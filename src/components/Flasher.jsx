@@ -49,13 +49,14 @@ export default function Flasher() {
   return (
     <section id="flash">
       <div className="container">
+        <p className="eyebrow">Install</p>
         <h2>Flash from your browser</h2>
-        <p>
-          Plug your device in over USB, pick its build profile below,
-          and the page will write the latest firmware directly.
+        <p className="measure">
+          Plug the device in over USB, pick its build profile, and this page
+          writes the latest firmware straight to it.
         </p>
         {!supported && (
-          <div className="card" style={{ marginTop: 16, borderColor: 'var(--accent)' }}>
+          <div className="panel notice">
             <strong>Web Serial isn't available in this browser.</strong>{' '}
             Use a recent Chrome, Edge, or Opera on desktop. iOS Safari and
             Firefox don't expose Web Serial — on those, download the{' '}
@@ -63,7 +64,7 @@ export default function Flasher() {
             <span className="kbd">flash.sh</span> from the command line.
           </div>
         )}
-        <div className="device flasher" style={{ marginTop: 28 }}>
+        <div className="panel flasher">
           <div className="flasher-main">
             <label className="flasher-select">
               <span>Device</span>
@@ -75,7 +76,7 @@ export default function Flasher() {
                 ))}
               </select>
             </label>
-            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginTop: 12 }}>
+            <div className="flasher-actions">
               {manifestUrl ? (
                 <>
                   <esp-web-install-button key={`${device.env}-${version}`} manifest={manifestUrl}>
@@ -96,9 +97,9 @@ export default function Flasher() {
               )}
             </div>
             {versionStale && (
-              <span className="browser-note" style={{ marginTop: 8 }}>
+              <p className="browser-note">
                 Couldn't reach the GitHub API — falling back to {FIRMWARE_VERSION}.
-              </span>
+              </p>
             )}
           </div>
           {device.image && !imageFailed && (
