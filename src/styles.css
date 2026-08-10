@@ -378,12 +378,29 @@ section[id]:focus { outline: none; }
   color: var(--text-dim);
 }
 
-.hero-screen { min-width: 0; }
-.hero-screen-note {
-  margin: 14px 0 0;
+/* An actual capture off the hardware, in a bezel. The panel is sized by the
+   image's own 4:3 and kept pixel-doubled rather than smoothed, so it reads as
+   a 320x240 LCD instead of a blurry upscale. */
+.hero-screen {
+  min-width: 0;
+  margin: 0;
+}
+.hero-screen img {
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-screen);
+  border: 1px solid var(--divider-hi);
+  image-rendering: pixelated;
+  background: #000;
+  box-shadow:
+    0 0 0 6px color-mix(in srgb, var(--panel-alt) 55%, transparent),
+    0 24px 60px -24px rgb(0 0 0 / 0.55);
+}
+.hero-screen figcaption {
+  margin: 22px 0 0;
   font-family: var(--font-mono);
   font-size: 0.72rem;
-  line-height: 1.5;
+  letter-spacing: 0.04em;
   color: var(--text-dim);
   text-align: center;
 }
@@ -391,123 +408,6 @@ section[id]:focus { outline: none; }
 @media (max-width: 880px) {
   .hero-inner { grid-template-columns: 1fr; }
   .hero-screen { max-width: 460px; }
-}
-
-/* --- Device screen (the firmware's channel view, in the browser) --------- */
-
-.screen {
-  font-family: var(--font-mono);
-  font-size: clamp(11px, 1.15vw, 14px);
-  line-height: 1.25;
-  aspect-ratio: 4 / 3;
-  display: flex;
-  flex-direction: column;
-  gap: 0.4em;
-  padding: 0.5em;
-  border-radius: var(--radius-screen);
-  border: 1px solid var(--divider-hi);
-  background: linear-gradient(180deg,
-    color-mix(in srgb, var(--status-top) 60%, var(--bg-main)) 0%,
-    var(--bg-main) 40%);
-  box-shadow:
-    0 0 0 6px color-mix(in srgb, var(--panel-alt) 55%, transparent),
-    0 24px 60px -24px rgb(0 0 0 / 0.55);
-  overflow: hidden;
-}
-
-.screen-status {
-  display: flex;
-  align-items: center;
-  gap: 0.55em;
-  flex: 0 0 auto;
-  padding: 0.35em 0.5em;
-  border: 1px solid var(--divider-hi);
-  border-radius: 0.55em;
-  background: var(--status-bg);
-  font-size: 0.86em;
-}
-
-.screen-chan {
-  padding: 0.15em 0.8em;
-  border: 1px solid var(--accent);
-  border-radius: 999px;
-  background: var(--select-bg);
-  color: var(--accent);
-  font-weight: 500;
-}
-
-.screen-time { margin-left: auto; color: var(--text-main); }
-
-.screen-batt {
-  width: 2.3em;
-  height: 0.9em;
-  padding: 1.5px;
-  border: 1px solid var(--divider-hi);
-  border-radius: 999px;
-  background: var(--panel-alt);
-}
-.screen-batt i {
-  display: block;
-  height: 100%;
-  border-radius: 999px;
-  background: var(--accent);
-}
-
-.screen-log {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  gap: 0.35em;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.screen-msg {
-  padding: 0.3em 0.55em;
-  border: 1px solid var(--divider-hi);
-  border-radius: 0.5em;
-  background: var(--panel-bg);
-  animation: screen-msg-in .4s ease both;
-}
-.screen-msg-own {
-  margin-left: 14%;
-  border-color: var(--accent);
-  background: var(--select-bg);
-}
-
-.screen-meta {
-  display: flex;
-  gap: 0.6em;
-  font-size: 0.78em;
-  color: var(--text-dim);
-}
-.screen-from { color: var(--accent); }
-
-.screen-body {
-  color: var(--text-main);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.screen-keys {
-  display: flex;
-  flex: 0 0 auto;
-  justify-content: space-between;
-  gap: 0.4em;
-  padding: 0.35em 0.6em;
-  border: 1px solid var(--divider-hi);
-  border-radius: 999px;
-  background: var(--status-bg);
-  font-size: 0.74em;
-  color: var(--text-dim);
-}
-.screen-key b { color: var(--accent); font-weight: 500; }
-
-@keyframes screen-msg-in {
-  from { opacity: 0; transform: translateY(0.7em); }
-  to   { opacity: 1; transform: none; }
 }
 
 /* --- Features ------------------------------------------------------------ */

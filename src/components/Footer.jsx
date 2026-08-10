@@ -1,4 +1,13 @@
-import { KEY_LEGEND } from './DeviceScreen.jsx'
+// The chat view's real shortcut row, verbatim from main_lvgl.cpp
+// (`s_chatShortcutText`). Split so the bracketed key can take the accent color.
+const KEY_LEGEND = [
+  { key: 'C', before: '(', after: ')FG' },
+  { key: 'h', before: 'C(', after: ')an' },
+  { key: 'D', before: '(', after: ')M' },
+  { key: 'N', before: '(', after: ')odes' },
+  { key: 'L', before: '(', after: ')ive' },
+  { key: 'A', before: '(', after: ')ct' },
+]
 
 export default function Footer() {
   return (
@@ -7,7 +16,7 @@ export default function Footer() {
         <p className="footer-mark">Camillia for Meshtastic · GPLv3</p>
         <p className="footer-keys" aria-hidden="true">
           {KEY_LEGEND.map(k => (
-            <span key={k.key}>(<b>{k.key}</b>){k.rest}</span>
+            <span key={k.key}>{k.before}<b>{k.key}</b>{k.after}</span>
           ))}
         </p>
         <p className="footer-links">

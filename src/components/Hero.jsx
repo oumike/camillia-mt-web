@@ -1,4 +1,4 @@
-import DeviceScreen from './DeviceScreen.jsx'
+import { withBase } from '../basePath'
 
 export default function Hero() {
   return (
@@ -21,12 +21,15 @@ export default function Hero() {
           <p className="hero-spec">6 boards · 8 channels · 13 palettes</p>
         </div>
 
-        <div className="hero-screen">
-          <DeviceScreen live />
-          <p className="hero-screen-note">
-            Live render of the channel view, in the theme you have selected.
-          </p>
-        </div>
+        <figure className="hero-screen">
+          <img
+            src={withBase('/screenshots/channel.png')}
+            alt="The Camillia channel view: a timeline of mesh messages, each with a timestamp and sender name, above a row of keyboard shortcuts."
+            width="320"
+            height="240"
+          />
+          <figcaption>LilyGo T-Deck · 320 × 240 · Camillia dark</figcaption>
+        </figure>
       </div>
     </section>
   )
