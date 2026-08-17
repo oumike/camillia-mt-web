@@ -57,4 +57,13 @@ export const DEVICES = [
     link: 'https://shop.attaky.com/',
     image: withBase('/devices/mesh-deck.jpg'),
   },
+  {
+    env: 'm9',
+    buy: { seller: 'Elecrow', href: 'https://www.elecrow.com/thinknode-m9-meshcore-communication-terminal-with-full-keyboard-2-4inch-lcd-esp32-s3-lr1110-gps-2300mah.html' },
+    name: 'Elecrow ThinkNode M9',
+    chip: 'ESP32-S3',
+    desc: 'LR1110 LoRa — the only non-SX1262 board here — 2.4″ 320×240 display, 37-key QWERTY with a d-pad and six dedicated shortcut buttons, GPS, microSD, 2300 mAh. No touch panel.',
+    link: 'https://www.elecrow.com/thinknode-m9-meshcore-communication-terminal-with-full-keyboard-2-4inch-lcd-esp32-s3-lr1110-gps-2300mah.html',
+    image: withBase('/devices/m9.jpg'),
+  },
 ]

@@ -12,7 +12,7 @@ export const REPO = 'oumike/camillia-mt'
 // CDN itself does not send Access-Control-Allow-Origin.
 export const PROXY_BASE = withBase('/firmware')
 
-// platformio env name -> release asset slug (matches .github/workflows/build.yml).
+// platformio env name -> release asset slug (matches release.sh's env_out_name).
 const ASSET_SLUG = {
   'tdeck': 'tdeck',
   'tlora-pager-tft': 'tlora-pager-tft',
@@ -20,6 +20,7 @@ const ASSET_SLUG = {
   'heltec-v4': 'heltec',
   'heltec-v4-vertical': 'heltec-vertical',
   'mesh-deck': 'mesh-deck',
+  'm9': 'm9',
 }
 
 export function firmwareUrl(env, version) {
