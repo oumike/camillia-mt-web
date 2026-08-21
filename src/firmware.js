@@ -2,7 +2,7 @@ import { withBase } from './basePath'
 
 // Configuration for the in-browser flasher. FIRMWARE_VERSION is the fallback
 // used if the GitHub API call fails (rate limit, offline, etc.) — the live
-// version is fetched at page load via latestVersion().
+// version list is fetched at page load via releaseCatalog().
 export const FIRMWARE_VERSION = 'v2.5.0'
 export const REPO = 'oumike/camillia-mt'
 
@@ -23,10 +23,14 @@ const ASSET_SLUG = {
   'm9': 'm9',
 }
 
-export function firmwareUrl(env, version) {
+export function firmwareAssetName(env, version) {
   const slug = ASSET_SLUG[env]
   if (!slug) throw new Error(`No release asset mapping for env "${env}"`)
-  return `${PROXY_BASE}/${version}/camillia-mt-${slug}-${version}.bin`
+  return `camillia-mt-${slug}-${version}.bin`
+}
+
+export function firmwareUrl(env, version) {
+  return `${PROXY_BASE}/${version}/${firmwareAssetName(env, version)}`
 }
 
 // esp-web-tools manifest. flash.sh writes one bin at offset 0x0 for esp32s3,
@@ -57,16 +61,61 @@ export function manifestDataUrl(device, version) {
   return `data:application/json;charset=utf-8,${encodeURIComponent(json)}`
 }
 
-// Ask GitHub for the latest release tag. Returns the tag string (e.g. "v2.5.1").
-// api.github.com serves CORS headers, so this works from the browser. Throws
-// on network errors / rate limit — callers should fall back to FIRMWARE_VERSION.
-// GitHub's /releases/latest excludes prereleases, so this only returns stable.
+// Fetch all GitHub releases (paginated) and return an ordered catalog:
+// [{ tag, assetNames, notes, url } ...], newest first. Drafts are skipped.
+export async function releaseCatalog() {
+  const perPage = 100
+  const maxPages = 10
+  const out = []
+
+  for (let page = 1; page <= maxPages; page += 1) {
+    const res = await fetch(
+      `https://api.github.com/repos/${REPO}/releases?per_page=${perPage}&page=${page}`,
+      {
+        headers: { Accept: 'application/vnd.github+json' },
+      }
+    )
+    if (!res.ok) throw new Error(`GitHub API ${res.status}`)
+    const data = await res.json()
+    if (!Array.isArray(data)) throw new Error('Unexpected releases response')
+
+    for (const rel of data) {
+      if (!rel || rel.draft || !rel.tag_name) continue
+      const assetNames = Array.isArray(rel.assets)
+        ? rel.assets
+            .map(a => a?.name)
+            .filter(Boolean)
+        : []
+      out.push({
+        tag: rel.tag_name,
+        assetNames,
+        notes: rel.body ?? '',
+        url: rel.html_url ?? '',
+      })
+    }
+
+    if (data.length < perPage) break
+  }
+
+  if (!out.length) throw new Error('No release tags found')
+  return out
+}
+
+// Return version tags that have a flashable asset for this env.
+export function versionsForEnv(catalog, env) {
+  if (!Array.isArray(catalog)) return []
+  return catalog
+    .filter(rel => {
+      if (!rel || !rel.tag || !Array.isArray(rel.assetNames)) return false
+      return rel.assetNames.includes(firmwareAssetName(env, rel.tag))
+    })
+    .map(rel => rel.tag)
+}
+
+// Backward-compatible helper for callers that still want a single latest tag.
 export async function latestVersion() {
-  const res = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`, {
-    headers: { Accept: 'application/vnd.github+json' },
-  })
-  if (!res.ok) throw new Error(`GitHub API ${res.status}`)
-  const data = await res.json()
-  if (!data.tag_name) throw new Error('No tag_name in release response')
-  return data.tag_name
+  const catalog = await releaseCatalog()
+  const top = catalog[0]?.tag
+  if (!top) throw new Error('No tag_name in release response')
+  return top
 }

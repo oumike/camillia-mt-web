@@ -689,7 +689,8 @@ section[id]:focus { outline: none; }
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 28px;
-  margin-top: 40px;
+  width: 75%;
+  margin: 40px 0 0;
 }
 
 .flasher esp-web-install-button {
@@ -699,6 +700,11 @@ section[id]:focus { outline: none; }
 }
 
 .flasher-main { min-width: 0; }
+
+.flasher-selects {
+  display: grid;
+  gap: 12px;
+}
 
 .flasher-select {
   display: flex;
@@ -731,12 +737,123 @@ section[id]:focus { outline: none; }
   background-repeat: no-repeat;
 }
 
+.flasher-version-row {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.flasher-version-row select {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.flasher-row-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border: 1px solid var(--divider-hi);
+  border-radius: 9px;
+  background: var(--panel-alt);
+  color: var(--text-main);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  padding: 0 11px;
+  white-space: nowrap;
+  text-decoration: none;
+  border-bottom: 0;
+}
+
+.flasher-row-btn:hover {
+  background: var(--select-bg);
+}
+
+.flasher-row-btn[disabled] {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.flasher-notes-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--bg-main) 34%, #000);
+  backdrop-filter: blur(4px);
+}
+
+.flasher-notes-modal-panel {
+  width: min(1100px, 80vw);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel-bg);
+  border: 1px solid var(--divider-hi);
+  border-radius: var(--radius-panel);
+  padding: 12px;
+  overflow: hidden;
+}
+
+.flasher-notes-modal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.flasher-notes-modal-head strong {
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  color: var(--text-main);
+}
+
+.flasher-notes-modal-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.flasher-notes-modal-actions a {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+}
+
+.flasher-notes-modal-close {
+  border: 1px solid var(--divider-hi);
+  border-radius: 999px;
+  background: var(--panel-alt);
+  color: var(--text-main);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  padding: 7px 14px;
+}
+
+.flasher-notes-modal-close:hover {
+  background: var(--select-bg);
+}
+
+.flasher-notes-modal-body {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.94rem;
+  line-height: 1.55;
+  color: var(--text-dim);
+  white-space: pre-wrap;
+  max-height: calc(80vh - 96px);
+  overflow: auto;
+  padding: 6px 0 2px;
+  border-top: 1px solid var(--divider);
+}
+
 .flasher-actions {
   display: flex;
   gap: 10px;
   align-items: center;
   flex-wrap: wrap;
-  margin-top: 16px;
+  margin-top: 10px;
 }
 
 .browser-note {
@@ -759,7 +876,10 @@ section[id]:focus { outline: none; }
 }
 
 @media (max-width: 700px) {
-  .flasher { grid-template-columns: 1fr; }
+  .flasher {
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
   .flasher-device-image { justify-self: center; order: -1; }
 }
 

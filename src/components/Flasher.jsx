@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import 'esp-web-tools'
 import { DEVICES } from '../devices.js'
 import {
   FIRMWARE_VERSION,
-  latestVersion,
+  releaseCatalog,
+  versionsForEnv,
   manifestDataUrl,
   firmwareUrl,
 } from '../firmware.js'
@@ -12,22 +13,33 @@ function serialSupported() {
   return typeof navigator !== 'undefined' && 'serial' in navigator
 }
 
+const FOCUSABLE = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+
 export default function Flasher() {
   const [supported, setSupported] = useState(true)
   const [env, setEnv] = useState(DEVICES[0].env)
+  const [catalog, setCatalog] = useState(null)
   const [version, setVersion] = useState(null)
+  const [showNotes, setShowNotes] = useState(false)
   const [versionStale, setVersionStale] = useState(false)
   const [imageFailed, setImageFailed] = useState(false)
+  const notesPanelRef = useRef(null)
+  const notesCloseRef = useRef(null)
+  const notesReturnRef = useRef(null)
 
   useEffect(() => setSupported(serialSupported()), [])
 
   useEffect(() => {
     let cancelled = false
-    latestVersion()
-      .then(tag => { if (!cancelled) setVersion(tag) })
+    releaseCatalog()
+      .then(items => {
+        if (!cancelled) {
+          setCatalog(items)
+        }
+      })
       .catch(() => {
         if (!cancelled) {
-          setVersion(FIRMWARE_VERSION)
+          setCatalog([])
           setVersionStale(true)
         }
       })
@@ -41,10 +53,77 @@ export default function Flasher() {
 
   useEffect(() => { setImageFailed(false) }, [device.env])
 
+  const versions = useMemo(() => {
+    if (catalog === null) return []
+    const fromCatalog = versionsForEnv(catalog, device.env)
+    if (fromCatalog.length) return fromCatalog
+    return [FIRMWARE_VERSION]
+  }, [catalog, device.env])
+
+  useEffect(() => {
+    if (!versions.length) return
+    if (!version || !versions.includes(version)) {
+      setVersion(versions[0])
+    }
+  }, [versions, version])
+
   const manifestUrl = useMemo(
     () => version ? manifestDataUrl(device, version) : null,
     [device.env, version]
   )
+
+  const selectedRelease = useMemo(() => {
+    if (!Array.isArray(catalog) || !version) return null
+    return catalog.find(rel => rel.tag === version) ?? null
+  }, [catalog, version])
+
+  const selectedNotes = (selectedRelease?.notes ?? '').trim()
+  const selectedReleaseUrl = selectedRelease?.url
+    || (version ? `https://github.com/oumike/camillia-mt/releases/tag/${encodeURIComponent(version)}` : '')
+
+  function openNotes() {
+    notesReturnRef.current = document.activeElement
+    setShowNotes(true)
+  }
+
+  function closeNotes() {
+    setShowNotes(false)
+  }
+
+  useEffect(() => {
+    if (!showNotes) return undefined
+
+    const { overflow } = document.body.style
+    document.body.style.overflow = 'hidden'
+    notesCloseRef.current?.focus()
+
+    const onKeyDown = e => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        closeNotes()
+        return
+      }
+      if (e.key !== 'Tab') return
+      const items = notesPanelRef.current?.querySelectorAll(FOCUSABLE)
+      if (!items?.length) return
+      const first = items[0]
+      const last = items[items.length - 1]
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault()
+        first.focus()
+      }
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => {
+      window.removeEventListener('keydown', onKeyDown)
+      document.body.style.overflow = overflow
+      notesReturnRef.current?.focus?.()
+    }
+  }, [showNotes])
 
   return (
     <section id="flash">
@@ -52,8 +131,8 @@ export default function Flasher() {
         <p className="eyebrow">Install</p>
         <h2>Flash from your browser</h2>
         <p className="measure">
-          Plug the device in over USB, pick its build profile, and this page
-          writes the latest firmware straight to it.
+          Plug the device in over USB, pick its build profile and firmware
+          version, and this page writes it straight to the device.
         </p>
         {!supported && (
           <div className="panel notice">
@@ -66,16 +145,55 @@ export default function Flasher() {
         )}
         <div className="panel flasher">
           <div className="flasher-main">
-            <label className="flasher-select">
-              <span>Device</span>
-              <select value={env} onChange={e => setEnv(e.target.value)}>
-                {DEVICES.map(d => (
-                  <option key={d.env} value={d.env}>
-                    {d.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <div className="flasher-selects">
+              <label className="flasher-select">
+                <span>Device</span>
+                <select value={env} onChange={e => setEnv(e.target.value)}>
+                  {DEVICES.map(d => (
+                    <option key={d.env} value={d.env}>
+                      {d.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="flasher-select">
+                <span>Version</span>
+                <div className="flasher-version-row">
+                  <select
+                    value={version ?? ''}
+                    onChange={e => setVersion(e.target.value)}
+                    disabled={!versions.length}
+                  >
+                    {versions.map(tag => (
+                      <option key={tag} value={tag}>
+                        {tag}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    className="flasher-row-btn"
+                    onClick={() => (showNotes ? closeNotes() : openNotes())}
+                    disabled={!version}
+                  >
+                    {showNotes ? 'Hide notes' : 'Release notes'}
+                  </button>
+                  {version ? (
+                    <a
+                      className="flasher-row-btn"
+                      href={firmwareUrl(device.env, version)}
+                      download
+                    >
+                      Download .bin
+                    </a>
+                  ) : (
+                    <button type="button" className="flasher-row-btn" disabled>
+                      Download .bin
+                    </button>
+                  )}
+                </div>
+              </label>
+            </div>
             <div className="flasher-actions">
               {manifestUrl ? (
                 <>
@@ -88,17 +206,14 @@ export default function Flasher() {
                       Web Serial requires a secure (https://) connection.
                     </span>
                   </esp-web-install-button>
-                  <a className="btn btn-ghost" href={firmwareUrl(device.env, version)} download>
-                    Download .bin
-                  </a>
                 </>
               ) : (
-                <button className="btn" disabled>Checking latest release…</button>
+                <button className="btn" disabled>Loading releases…</button>
               )}
             </div>
             {versionStale && (
               <p className="browser-note">
-                Couldn't reach the GitHub API — falling back to {FIRMWARE_VERSION}.
+                Couldn't reach the GitHub API release list — falling back to {FIRMWARE_VERSION}.
               </p>
             )}
           </div>
@@ -114,6 +229,45 @@ export default function Flasher() {
             </div>
           )}
         </div>
+        {showNotes && version && (
+          <div
+            className="flasher-notes-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Release notes ${version}`}
+            onClick={closeNotes}
+          >
+            <div
+              className="flasher-notes-modal-panel"
+              ref={notesPanelRef}
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flasher-notes-modal-head">
+                <strong>{version}</strong>
+                <div className="flasher-notes-modal-actions">
+                  {selectedReleaseUrl && (
+                    <a href={selectedReleaseUrl} target="_blank" rel="noreferrer">Open on GitHub</a>
+                  )}
+                  <button
+                    type="button"
+                    ref={notesCloseRef}
+                    className="flasher-notes-modal-close"
+                    onClick={closeNotes}
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+              {selectedNotes ? (
+                <pre className="flasher-notes-modal-body">{selectedNotes}</pre>
+              ) : (
+                <p className="browser-note">
+                  No embedded release-note body for this tag. Use Open on GitHub.
+                </p>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </section>
   )
