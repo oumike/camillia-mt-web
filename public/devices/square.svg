@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240" width="320" height="240"
+     role="img" aria-label="Undisclosed device">
+  <!-- Stand-in artwork for a target we are not describing yet. Colors are a
+       single mid-slate rather than theme tokens on purpose: the page is loaded
+       through <img>, which gets no CSS from the site, and the light/dark switch
+       is an explicit toggle rather than prefers-color-scheme — so an internal
+       media query would fight it. This tone reads on both grounds. -->
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
+     font-weight="600" fill="#7C93B4" text-anchor="middle">
+    <text x="160" y="152" font-size="104" opacity="0.92">?</text>
+
+    <text x="58"  y="88"  font-size="40" opacity="0.42">?</text>
+    <text x="262" y="88"  font-size="40" opacity="0.42">?</text>
+    <text x="58"  y="196" font-size="40" opacity="0.42">?</text>
+    <text x="262" y="196" font-size="40" opacity="0.42">?</text>
+
+    <text x="112" y="56"  font-size="26" opacity="0.24">?</text>
+    <text x="208" y="56"  font-size="26" opacity="0.24">?</text>
+    <text x="112" y="224" font-size="26" opacity="0.24">?</text>
+    <text x="208" y="224" font-size="26" opacity="0.24">?</text>
+    <text x="26"  y="140" font-size="26" opacity="0.24">?</text>
+    <text x="294" y="140" font-size="26" opacity="0.24">?</text>
+  </g>
+</svg>

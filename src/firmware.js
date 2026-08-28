@@ -21,6 +21,7 @@ const ASSET_SLUG = {
   'heltec-v4-vertical': 'heltec-vertical',
   'mesh-deck': 'mesh-deck',
   'm9': 'm9',
+  'square': 'square',
 }
 
 export function firmwareAssetName(env, version) {

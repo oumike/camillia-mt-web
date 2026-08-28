@@ -66,4 +66,16 @@ export const DEVICES = [
     link: 'https://www.elecrow.com/thinknode-m9-meshcore-communication-terminal-with-full-keyboard-2-4inch-lcd-esp32-s3-lr1110-gps-2300mah.html',
     image: withBase('/devices/m9.jpg'),
   },
+  {
+    // Deliberately bare. The build exists and flashes like any other, but
+    // nothing here says what the hardware is: no chip, no description, no
+    // manufacturer link, no seller. Devices.jsx renders each of those only when
+    // present, so leaving them out is the whole mechanism — and the artwork is
+    // question marks rather than a photo. Fill the fields in when it is time to
+    // say more; nothing else needs changing.
+    env: 'square',
+    name: 'Square',
+    chip: '???',
+    image: withBase('/devices/square.svg'),
+  },
 ]

@@ -5,7 +5,7 @@ export default function Devices() {
     <section id="devices" className="band">
       <div className="container">
         <p className="eyebrow">Hardware</p>
-        <h2>Six boards, one firmware</h2>
+        <h2>Seven boards, one firmware</h2>
         <p className="measure">
           Every profile below is built from the same source tree. Pick your
           board in the flasher and it writes the matching build. Board names go
@@ -17,13 +17,15 @@ export default function Devices() {
             <article className="panel device" key={d.env}>
               <header className="device-head">
                 <h3>
-                  <a href={d.link} target="_blank" rel="noreferrer">{d.name}</a>
+                  {d.link
+                    ? <a href={d.link} target="_blank" rel="noreferrer">{d.name}</a>
+                    : d.name}
                 </h3>
                 <span className="device-env">{d.env}</span>
               </header>
-              <p>{d.desc}</p>
+              {d.desc && <p>{d.desc}</p>}
               <p className="device-foot">
-                <span className="device-chip">{d.chip}</span>
+                {d.chip && <span className="device-chip">{d.chip}</span>}
                 {d.buy && (
                   <a className="device-buy" href={d.buy.href}
                      target="_blank" rel="noreferrer">
