@@ -8,6 +8,7 @@ import {
   manifestDataUrl,
   firmwareUrl,
 } from '../firmware.js'
+import DebugReport from './DebugReport.jsx'
 
 function serialSupported() {
   return typeof navigator !== 'undefined' && 'serial' in navigator
@@ -210,6 +211,11 @@ export default function Flasher() {
               ) : (
                 <button className="btn" disabled>Loading releases…</button>
               )}
+              <DebugReport
+                device={device}
+                version={version}
+                supported={supported}
+              />
             </div>
             {versionStale && (
               <p className="browser-note">

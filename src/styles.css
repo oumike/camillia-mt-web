@@ -848,6 +848,158 @@ section[id]:focus { outline: none; }
   border-top: 1px solid var(--divider);
 }
 
+.debug-report-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 130;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: color-mix(in srgb, var(--bg-main) 34%, #000);
+  backdrop-filter: blur(4px);
+}
+
+.debug-report-panel {
+  width: min(880px, calc(100vw - 40px));
+  max-height: calc(100vh - 40px);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow: auto;
+  padding: 18px;
+  background: var(--panel-bg);
+  border: 1px solid var(--divider-hi);
+  border-radius: var(--radius-panel);
+  box-shadow: 0 24px 80px color-mix(in srgb, #000 55%, transparent);
+}
+
+.debug-report-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.debug-report-head .eyebrow { margin-bottom: 5px; }
+.debug-report-head h3 { margin: 0; font-size: 1.15rem; }
+
+.debug-report-close {
+  flex: 0 0 auto;
+  border: 1px solid var(--divider-hi);
+  border-radius: 999px;
+  background: var(--panel-alt);
+  color: var(--text-main);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  padding: 7px 14px;
+}
+
+.debug-report-close:hover { background: var(--select-bg); }
+.debug-report-close[disabled] { opacity: 0.45; cursor: default; }
+
+.debug-report-status {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  min-height: 42px;
+  padding: 9px 12px;
+  color: var(--text-dim);
+  background: var(--panel-alt);
+  border: 1px solid var(--divider);
+  border-radius: 8px;
+  font-size: 0.86rem;
+}
+
+.debug-report-status strong {
+  color: var(--text-main);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+}
+
+.debug-report-status-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--text-dim);
+}
+
+.debug-report-status-requesting .debug-report-status-dot,
+.debug-report-status-capturing .debug-report-status-dot {
+  background: var(--accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.debug-report-status-ready .debug-report-status-dot { background: #48a96a; }
+.debug-report-status-error .debug-report-status-dot { background: #d65b4a; }
+
+.debug-report-capture-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.debug-report-capture-actions .flasher-row-btn { min-height: 34px; }
+
+.debug-report-field {
+  display: grid;
+  gap: 7px;
+}
+
+.debug-report-field > span {
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.debug-report-field textarea {
+  width: 100%;
+  min-width: 0;
+  resize: vertical;
+  padding: 11px 12px;
+  color: var(--text-main);
+  background: var(--select-bg);
+  border: 1px solid var(--divider-hi);
+  border-radius: 8px;
+  font: inherit;
+  line-height: 1.45;
+}
+
+.debug-report-field textarea:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.debug-report-output-field textarea {
+  min-height: 240px;
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  line-height: 1.5;
+  tab-size: 2;
+  white-space: pre;
+}
+
+.debug-report-privacy {
+  margin: -3px 0 0;
+  color: var(--text-dim);
+  font-size: 0.78rem;
+}
+
+.debug-report-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 9px;
+  padding-top: 2px;
+}
+
+.debug-report-actions .flasher-row-btn {
+  min-height: 40px;
+  padding: 0 14px;
+}
+
 .flasher-actions {
   display: flex;
   gap: 10px;
@@ -881,6 +1033,16 @@ section[id]:focus { outline: none; }
     width: 100%;
   }
   .flasher-device-image { justify-self: center; order: -1; }
+
+  .debug-report-modal { padding: 10px; }
+  .debug-report-panel {
+    width: calc(100vw - 20px);
+    max-height: calc(100vh - 20px);
+    padding: 14px;
+  }
+  .debug-report-output-field textarea { min-height: 200px; }
+  .debug-report-actions { justify-content: stretch; }
+  .debug-report-actions > * { flex: 1 1 180px; justify-content: center; }
 }
 
 /* --- First-run steps ----------------------------------------------------- */

@@ -84,6 +84,24 @@ contexts. That means:
   Opera, Brave) on desktop. Firefox and Safari are not supported. The page
   detects this and offers a `.bin` download fallback.
 
+### Debug and report
+
+The firmware flasher also includes **Debug & report**. It opens a separate
+115200-baud Web Serial session, requests the firmware's read-only health
+snapshots, and captures ambient output for ten seconds. The report deliberately
+does not request chat content or configuration exports.
+
+Before showing the result, the browser redacts likely credentials, SSIDs,
+network addresses, node IDs, and coordinates. The user can review and edit both
+the problem description and serial output, copy the full report, or open a
+prefilled issue for `oumike/camillia-mt` assigned to `oumike`.
+
+This remains a static site: it never asks for or stores GitHub credentials.
+GitHub handles authentication, final review, and submission on its own new-issue
+page. If the serial output is too large for a reliable issue URL, the prefilled
+issue contains a compact excerpt and the full sanitized report is copied for
+optional pasting.
+
 ## Updating the firmware version
 
 Bump the constant in [`src/firmware.js`](src/firmware.js):
