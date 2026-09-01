@@ -15,6 +15,7 @@ export const PROXY_BASE = withBase('/firmware')
 // platformio env name -> release asset slug (matches release.sh's env_out_name).
 const ASSET_SLUG = {
   'tdeck': 'tdeck',
+  'tdeck-pro': 'tdeck-pro',
   'tlora-pager-tft': 'tlora-pager-tft',
   'cardputer-cap': 'cardputer-cap',
   'heltec-v4': 'heltec',

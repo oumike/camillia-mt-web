@@ -8,7 +8,7 @@ export default function Hero() {
           <p className="eyebrow">ESP32-S3 · SX1262 LoRa · GPL-3.0</p>
           <h1>Meshtastic without the phone</h1>
           <p className="lede">
-            Camillia is mesh radio firmware for six ESP32-S3 boards. Eight named
+            Camillia is mesh radio firmware for eight ESP32-S3 boards. Eight named
             channels, direct messages, GPS, and a config UI you open in a
             browser — all of it running on the device, whether you drive it with
             a keyboard, a roller wheel, a trackball, or a touchscreen.
@@ -18,7 +18,7 @@ export default function Hero() {
             <a className="btn btn-ghost" href="https://github.com/oumike/camillia-mt"
                target="_blank" rel="noreferrer">View source on GitHub</a>
           </div>
-          <p className="hero-spec">6 boards · 8 channels · 13 palettes</p>
+          <p className="hero-spec">8 boards · 8 channels · 13 palettes</p>
         </div>
 
         <figure className="hero-screen">

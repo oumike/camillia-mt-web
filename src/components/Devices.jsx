@@ -5,7 +5,7 @@ export default function Devices() {
     <section id="devices" className="band">
       <div className="container">
         <p className="eyebrow">Hardware</p>
-        <h2>Seven boards, one firmware</h2>
+        <h2>Eight boards, one firmware</h2>
         <p className="measure">
           Every profile below is built from the same source tree. Pick your
           board in the flasher and it writes the matching build. Board names go

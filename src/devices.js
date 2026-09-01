@@ -13,6 +13,15 @@ export const DEVICES = [
     image: withBase('/devices/tdeck.png'),
   },
   {
+    env: 'tdeck-pro',
+    buy: { seller: 'Rokland', href: 'https://store.rokland.com/products/lilygo-t-deck-pro-a7682e-4g-us-915-mhz' },
+    name: 'LilyGo T-Deck Pro',
+    chip: 'ESP32-S3',
+    desc: 'SX1262 LoRa, 3.1″ e-paper 240×320 portrait, 35-key QWERTY, capacitive touch, GPS, microSD, IMU and a vibration motor. The port follows LilyGo and Meshtastic pin definitions but is not yet verified on physical hardware.',
+    link: 'https://lilygo.cc/products/t-deck-pro',
+    image: withBase('/devices/tdeck-pro.jpg'),
+  },
+  {
     env: 'tlora-pager-tft',
     buy: { seller: 'Rokland', href: 'https://store.rokland.com/products/lilygo-t-lora-pager-us-915-mhz-lora-esp32-s3-handheld-aiot-programmable-development-device-k257-01' },
     name: 'LilyGo T-Lora Pager TFT',
