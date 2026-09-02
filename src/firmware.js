@@ -93,6 +93,10 @@ export async function releaseCatalog() {
         assetNames,
         notes: rel.body ?? '',
         url: rel.html_url ?? '',
+        // GitHub's own flag, not a guess from the tag text. release.sh --alpha
+        // publishes with --prerelease, which is the same bit the device's
+        // stable OTA route relies on to not see these builds.
+        prerelease: !!rel.prerelease,
       })
     }
 
@@ -103,15 +107,28 @@ export async function releaseCatalog() {
   return out
 }
 
+// Releases that have a flashable asset for this env, newest first.
+function releasesForEnv(catalog, env) {
+  if (!Array.isArray(catalog)) return []
+  return catalog.filter(rel => {
+    if (!rel || !rel.tag || !Array.isArray(rel.assetNames)) return false
+    return rel.assetNames.includes(firmwareAssetName(env, rel.tag))
+  })
+}
+
 // Return version tags that have a flashable asset for this env.
 export function versionsForEnv(catalog, env) {
-  if (!Array.isArray(catalog)) return []
-  return catalog
-    .filter(rel => {
-      if (!rel || !rel.tag || !Array.isArray(rel.assetNames)) return false
-      return rel.assetNames.includes(firmwareAssetName(env, rel.tag))
-    })
-    .map(rel => rel.tag)
+  return releasesForEnv(catalog, env).map(rel => rel.tag)
+}
+
+// The same list split by channel, for a version picker that shows the two
+// apart. Order within each group is preserved (newest first).
+export function groupedVersionsForEnv(catalog, env) {
+  const rels = releasesForEnv(catalog, env)
+  return {
+    stable: rels.filter(rel => !rel.prerelease).map(rel => rel.tag),
+    alpha: rels.filter(rel => rel.prerelease).map(rel => rel.tag),
+  }
 }
 
 // Backward-compatible helper for callers that still want a single latest tag.

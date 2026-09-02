@@ -5,7 +5,7 @@ import {
   appendCapture,
   buildDebugIssue,
   buildDebugReport,
-  redactDiagnostics,
+  normalizeDiagnostics,
 } from '../debugReport.js'
 
 const FOCUSABLE = 'a[href], button:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
@@ -46,6 +46,9 @@ export default function DebugReport({ device, version, supported }) {
   const [secondsLeft, setSecondsLeft] = useState(0)
   const [capturedAt, setCapturedAt] = useState('')
   const [reportContext, setReportContext] = useState(null)
+  // Applies only to the prefilled GitHub issue. The captured diagnostics above
+  // are always the real thing; this decides what leaves the browser.
+  const [rawIssue, setRawIssue] = useState(false)
 
   const panelRef = useRef(null)
   const closeRef = useRef(null)
@@ -75,8 +78,8 @@ export default function DebugReport({ device, version, supported }) {
   }), [context.device, context.version, summary, diagnostics, capturedAt])
 
   const issue = useMemo(
-    () => buildDebugIssue(reportOptions),
-    [reportOptions]
+    () => buildDebugIssue({ ...reportOptions, redact: !rawIssue }),
+    [reportOptions, rawIssue]
   )
 
   function clearTimers() {
@@ -93,7 +96,7 @@ export default function DebugReport({ device, version, supported }) {
 
   function appendLocalOutput(value, paint = true) {
     captureRef.current = appendCapture(captureRef.current, value)
-    if (paint && mountedRef.current) setDiagnostics(redactDiagnostics(captureRef.current))
+    if (paint && mountedRef.current) setDiagnostics(normalizeDiagnostics(captureRef.current))
   }
 
   function stopCapture() {
@@ -192,8 +195,8 @@ export default function DebugReport({ device, version, supported }) {
       if (readError && !stopRequestedRef.current) throw readError
       if (session !== sessionRef.current) return
 
-      const redacted = redactDiagnostics(captureRef.current)
-      setDiagnostics(redacted || '[No serial output was received]')
+      const captured = normalizeDiagnostics(captureRef.current)
+      setDiagnostics(captured || '[No serial output was received]')
       changePhase('ready')
       setStatus(stopRequestedRef.current
         ? 'Capture stopped. Review and edit the report below.'
@@ -203,7 +206,7 @@ export default function DebugReport({ device, version, supported }) {
       const cancelled = error?.name === 'NotFoundError'
       const portBusy = error?.name === 'InvalidStateError'
         || /already open|failed to open|in use/i.test(error?.message ?? '')
-      const partial = redactDiagnostics(captureRef.current)
+      const partial = normalizeDiagnostics(captureRef.current)
       if (!cancelled && !portBusy && partial && phaseRef.current === 'capturing') {
         setDiagnostics(partial)
         changePhase('ready')
@@ -233,7 +236,7 @@ export default function DebugReport({ device, version, supported }) {
   async function copyReport() {
     try {
       await copyText(buildDebugReport(reportOptions))
-      setStatus('Full sanitized report copied to the clipboard.')
+      setStatus('Full report copied to the clipboard, with values unmodified.')
     } catch (error) {
       setStatus(`Could not copy the report: ${error?.message || 'Clipboard unavailable'}`)
     }
@@ -317,7 +320,7 @@ export default function DebugReport({ device, version, supported }) {
           ? 'Web Serial requires Chrome, Edge, Opera, or Brave on desktop'
           : !secure
             ? 'Web Serial requires HTTPS or localhost'
-            : 'Read sanitized serial diagnostics and prepare a GitHub issue'}
+            : 'Capture serial diagnostics and prepare a GitHub issue'}
       >
         Debug &amp; report
       </button>
@@ -389,9 +392,25 @@ export default function DebugReport({ device, version, supported }) {
                 </label>
 
                 <p className="debug-report-privacy">
-                  SSIDs, likely secrets, network addresses, node IDs, and coordinates are redacted
-                  automatically. Review the output before submitting it.
+                  The capture above is exactly what the device printed, and copying it
+                  keeps it that way. Only the GitHub issue is filtered, because it is
+                  public: SSIDs, likely secrets, network addresses, node IDs and
+                  coordinates are replaced with placeholders there. Review the output
+                  before submitting it.
                 </p>
+                <label className="debug-report-privacy" style={{ display: 'flex', gap: '.5em', alignItems: 'flex-start' }}>
+                  <input
+                    type="checkbox"
+                    checked={rawIssue}
+                    onChange={e => setRawIssue(e.target.checked)}
+                    style={{ width: 'auto', margin: '.2em 0 0' }}
+                  />
+                  <span>
+                    Send unmodified values in the GitHub issue. Only do this if you have
+                    read the capture and know it carries no WiFi password, channel key or
+                    location you mind publishing.
+                  </span>
+                </label>
               </>
             )}
 

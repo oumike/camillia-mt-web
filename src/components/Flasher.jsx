@@ -5,6 +5,7 @@ import {
   FIRMWARE_VERSION,
   releaseCatalog,
   versionsForEnv,
+  groupedVersionsForEnv,
   manifestDataUrl,
   firmwareUrl,
 } from '../firmware.js'
@@ -60,6 +61,18 @@ export default function Flasher() {
     if (fromCatalog.length) return fromCatalog
     return [FIRMWARE_VERSION]
   }, [catalog, device.env])
+
+  // Split for the picker only. When the catalog is unavailable `versions` is
+  // the hardcoded fallback tag, which has no release behind it to classify —
+  // so treat it as stable rather than dropping it from the list entirely.
+  const versionGroups = useMemo(() => {
+    if (catalog === null || !catalog.length) return { stable: versions, alpha: [] }
+    const grouped = groupedVersionsForEnv(catalog, device.env)
+    if (!grouped.stable.length && !grouped.alpha.length) {
+      return { stable: versions, alpha: [] }
+    }
+    return grouped
+  }, [catalog, device.env, versions])
 
   useEffect(() => {
     if (!versions.length) return
@@ -165,11 +178,24 @@ export default function Flasher() {
                     onChange={e => setVersion(e.target.value)}
                     disabled={!versions.length}
                   >
-                    {versions.map(tag => (
-                      <option key={tag} value={tag}>
-                        {tag}
-                      </option>
-                    ))}
+                    {versionGroups.alpha.length > 0 && (
+                      <optgroup label="── Alpha — prerelease, for testers ──">
+                        {versionGroups.alpha.map(tag => (
+                          <option key={tag} value={tag}>
+                            {tag}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
+                    {versionGroups.stable.length > 0 && (
+                      <optgroup label="── Stable — recommended ──">
+                        {versionGroups.stable.map(tag => (
+                          <option key={tag} value={tag}>
+                            {tag}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
                   </select>
                   <button
                     type="button"
