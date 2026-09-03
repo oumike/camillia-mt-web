@@ -76,15 +76,15 @@ export const DEVICES = [
     image: withBase('/devices/m9.jpg'),
   },
   {
-    // Deliberately bare. The build exists and flashes like any other, but
-    // nothing here says what the hardware is: no chip, no description, no
-    // manufacturer link, no seller. Devices.jsx renders each of those only when
-    // present, so leaving them out is the whole mechanism — and the artwork is
-    // question marks rather than a photo. Fill the fields in when it is time to
-    // say more; nothing else needs changing.
-    env: 'square',
-    name: 'Square',
-    chip: '???',
-    image: withBase('/devices/square.svg'),
+    // Shipped under the codename `square` while the hardware was unreleased;
+    // Seeed sells it as the Wio Tracker L2. Still missing a product photo and a
+    // manufacturer link, so the artwork stays the question-mark placeholder and
+    // `link`/`buy` are omitted — Devices.jsx renders each field only when
+    // present. Drop in a photo and the vendor URL when they are available.
+    env: 'wio-tracker-l2',
+    name: 'Seeed Wio Tracker L2',
+    chip: 'ESP32-S3',
+    desc: 'SX1262 LoRa, 320×240 touch panel, GNSS, ES8311 audio, 16 MB flash and 8 MB PSRAM. Touch-first UI with an on-screen keyboard, optional BLE keyboard, and SD_MMC storage for config import/export. Brightness, battery, audio, SD and BLE support are not yet verified on physical hardware.',
+    image: withBase('/devices/wio-tracker-l2.svg'),
   },
 ]

@@ -22,7 +22,7 @@ const ASSET_SLUG = {
   'heltec-v4-vertical': 'heltec-vertical',
   'mesh-deck': 'mesh-deck',
   'm9': 'm9',
-  'square': 'square',
+  'wio-tracker-l2': 'wio-tracker-l2',
 }
 
 export function firmwareAssetName(env, version) {

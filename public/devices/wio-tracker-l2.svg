@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240" width="320" height="240"
-     role="img" aria-label="Undisclosed device">
-  <!-- Stand-in artwork for a target we are not describing yet. Colors are a
-       single mid-slate rather than theme tokens on purpose: the page is loaded
+     role="img" aria-label="Seeed Wio Tracker L2 — no photo available">
+  <!-- Stand-in artwork for a target we have no product photo for yet. Colors are
+       a single mid-slate rather than theme tokens on purpose: the page is loaded
        through <img>, which gets no CSS from the site, and the light/dark switch
        is an explicit toggle rather than prefers-color-scheme — so an internal
        media query would fight it. This tone reads on both grounds. -->
