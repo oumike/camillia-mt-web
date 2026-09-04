@@ -123,11 +123,22 @@ export function versionsForEnv(catalog, env) {
 
 // The same list split by channel, for a version picker that shows the two
 // apart. Order within each group is preserved (newest first).
+//
+// Every stable release is listed, but only the newest alpha. Older prereleases
+// are superseded by definition -- an alpha exists to be tested and replaced,
+// and there is no reason to install one that a newer alpha has already moved
+// past. They stay on GitHub for anyone who wants them by tag; what they do not
+// do is grow the picker without bound alongside the stable half that is the
+// recommended path.
+//
+// "Newest" is the catalog's own order, which is GitHub's releases listing
+// (created_at descending) -- the same assumption the device's own alpha OTA
+// route makes when it takes the first prerelease it finds.
 export function groupedVersionsForEnv(catalog, env) {
   const rels = releasesForEnv(catalog, env)
   return {
     stable: rels.filter(rel => !rel.prerelease).map(rel => rel.tag),
-    alpha: rels.filter(rel => rel.prerelease).map(rel => rel.tag),
+    alpha: rels.filter(rel => rel.prerelease).map(rel => rel.tag).slice(0, 1),
   }
 }
 
