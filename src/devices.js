@@ -58,6 +58,30 @@ export const DEVICES = [
     image: withBase('/devices/heltec-v4-expansion-kit.png'),
   },
   {
+    // The V4-R8 pairs a different mainboard with a different carrier, so it is a
+    // separate target rather than a V4 variant: octal PSRAM takes GPIO33-37 out
+    // of circulation and the Expansion Kit V2 rewires display, touch, SD and
+    // buzzer. See src/hal/hw_heltec_r8.h in the firmware tree.
+    //
+    // No V4-R8 product photo or vendor SKU page yet, so the artwork falls back
+    // to the V4 expansion-kit shot and `buy` is omitted -- Devices.jsx renders
+    // each field only when present. Swap both in when they exist.
+    env: 'heltec-r8',
+    name: 'Heltec WiFi LoRa 32 V4-R8 + TFT',
+    chip: 'ESP32-S3',
+    desc: 'The V4-R8 mainboard (8 MB octal PSRAM) on the Expansion Kit V2 carrier: ST7789 320x240 TFT, CHSC6X touch, GPS, and the microSD slot the v1 kit does not have. Touch-first horizontal UI. Not yet verified on physical hardware.',
+    link: 'https://heltec.org/',
+    image: withBase('/devices/heltec-v4-expansion-kit.png'),
+  },
+  {
+    env: 'heltec-r8-vertical',
+    name: 'Heltec WiFi LoRa 32 V4-R8 + TFT (vertical)',
+    chip: 'ESP32-S3',
+    desc: 'Same as Heltec V4-R8 with a vertical-oriented UI layout.',
+    link: 'https://heltec.org/',
+    image: withBase('/devices/heltec-v4-expansion-kit.png'),
+  },
+  {
     env: 'mesh-deck',
     buy: { seller: 'Attaky', href: 'https://shop.attaky.com/' },
     name: 'Attaky Mesh Deck',

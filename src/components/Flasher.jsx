@@ -5,7 +5,6 @@ import {
   FIRMWARE_VERSION,
   releaseCatalog,
   versionsForEnv,
-  groupedVersionsForEnv,
   manifestDataUrl,
   firmwareUrl,
 } from '../firmware.js'
@@ -55,41 +54,18 @@ export default function Flasher() {
 
   useEffect(() => { setImageFailed(false) }, [device.env])
 
-  // Every tag with an asset for this device, newest first. Not what the picker
-  // offers — see versions below — because the alpha half is capped at the
-  // newest one.
-  const catalogVersions = useMemo(() => {
+  // Every selectable tag for this device, newest first. versionsForEnv() is
+  // stable-only, so prereleases never reach the picker.
+  //
+  // When the GitHub API is unreachable the catalog comes back empty and the
+  // hardcoded FIRMWARE_VERSION stands in: it has no release behind it to check,
+  // but dropping it would leave the control with nothing at all.
+  const versions = useMemo(() => {
     if (catalog === null) return []
     const fromCatalog = versionsForEnv(catalog, device.env)
     if (fromCatalog.length) return fromCatalog
     return [FIRMWARE_VERSION]
   }, [catalog, device.env])
-
-  // Split for the picker. When the catalog is unavailable `catalogVersions` is
-  // the hardcoded fallback tag, which has no release behind it to classify —
-  // so treat it as stable rather than dropping it from the list entirely.
-  const versionGroups = useMemo(() => {
-    if (catalog === null || !catalog.length) return { stable: catalogVersions, alpha: [] }
-    const grouped = groupedVersionsForEnv(catalog, device.env)
-    if (!grouped.stable.length && !grouped.alpha.length) {
-      return { stable: catalogVersions, alpha: [] }
-    }
-    return grouped
-  }, [catalog, device.env, catalogVersions])
-
-  // The tags that are actually selectable, derived from the groups so this and
-  // the rendered <option> list cannot disagree. Superseded alphas are no longer
-  // offered, and a stale one held in state must therefore not validate — it
-  // would leave the control showing a value it has no option for.
-  //
-  // Ordering stays newest-first across both channels rather than alpha-then-
-  // stable, because versions[0] is the default selection: grouping order would
-  // pre-select a prerelease whenever one exists, and stable is the recommended
-  // path.
-  const versions = useMemo(() => {
-    const offered = new Set([...versionGroups.alpha, ...versionGroups.stable])
-    return catalogVersions.filter(tag => offered.has(tag))
-  }, [catalogVersions, versionGroups])
 
   useEffect(() => {
     if (!versions.length) return
@@ -195,24 +171,11 @@ export default function Flasher() {
                     onChange={e => setVersion(e.target.value)}
                     disabled={!versions.length}
                   >
-                    {versionGroups.alpha.length > 0 && (
-                      <optgroup label="── Alpha — prerelease, for testers ──">
-                        {versionGroups.alpha.map(tag => (
-                          <option key={tag} value={tag}>
-                            {tag}
-                          </option>
-                        ))}
-                      </optgroup>
-                    )}
-                    {versionGroups.stable.length > 0 && (
-                      <optgroup label="── Stable — recommended ──">
-                        {versionGroups.stable.map(tag => (
-                          <option key={tag} value={tag}>
-                            {tag}
-                          </option>
-                        ))}
-                      </optgroup>
-                    )}
+                    {versions.map(tag => (
+                      <option key={tag} value={tag}>
+                        {tag}
+                      </option>
+                    ))}
                   </select>
                   <button
                     type="button"

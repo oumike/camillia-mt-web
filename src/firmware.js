@@ -20,6 +20,10 @@ const ASSET_SLUG = {
   'cardputer-cap': 'cardputer-cap',
   'heltec-v4': 'heltec',
   'heltec-v4-vertical': 'heltec-vertical',
+  // env_out_name() in release.sh only rewrites the two heltec-v4 slugs; every
+  // other env keeps its own name, these included.
+  'heltec-r8': 'heltec-r8',
+  'heltec-r8-vertical': 'heltec-r8-vertical',
   'mesh-deck': 'mesh-deck',
   'm9': 'm9',
   'wio-tracker-l2': 'wio-tracker-l2',
@@ -107,39 +111,25 @@ export async function releaseCatalog() {
   return out
 }
 
-// Releases that have a flashable asset for this env, newest first.
+// Stable releases that have a flashable asset for this env, newest first.
+//
+// Prereleases are filtered out here rather than at the call site so there is
+// exactly one place that decides what the flasher may install. Alphas exist to
+// be tested by people who already know how to get one -- by tag on GitHub, or
+// over the device's own alpha OTA route -- and offering them beside the stable
+// list on the front page invites installing one by accident.
 function releasesForEnv(catalog, env) {
   if (!Array.isArray(catalog)) return []
   return catalog.filter(rel => {
     if (!rel || !rel.tag || !Array.isArray(rel.assetNames)) return false
+    if (rel.prerelease) return false
     return rel.assetNames.includes(firmwareAssetName(env, rel.tag))
   })
 }
 
-// Return version tags that have a flashable asset for this env.
+// Return stable version tags that have a flashable asset for this env.
 export function versionsForEnv(catalog, env) {
   return releasesForEnv(catalog, env).map(rel => rel.tag)
-}
-
-// The same list split by channel, for a version picker that shows the two
-// apart. Order within each group is preserved (newest first).
-//
-// Every stable release is listed, but only the newest alpha. Older prereleases
-// are superseded by definition -- an alpha exists to be tested and replaced,
-// and there is no reason to install one that a newer alpha has already moved
-// past. They stay on GitHub for anyone who wants them by tag; what they do not
-// do is grow the picker without bound alongside the stable half that is the
-// recommended path.
-//
-// "Newest" is the catalog's own order, which is GitHub's releases listing
-// (created_at descending) -- the same assumption the device's own alpha OTA
-// route makes when it takes the first prerelease it finds.
-export function groupedVersionsForEnv(catalog, env) {
-  const rels = releasesForEnv(catalog, env)
-  return {
-    stable: rels.filter(rel => !rel.prerelease).map(rel => rel.tag),
-    alpha: rels.filter(rel => rel.prerelease).map(rel => rel.tag).slice(0, 1),
-  }
 }
 
 // Backward-compatible helper for callers that still want a single latest tag.
