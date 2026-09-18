@@ -1112,9 +1112,19 @@ footer {
   font-size: 0.76rem;
 }
 
-/* Accented so it reads as the one link in this row that is an invitation
-   rather than a reference. */
-.footer-support { color: var(--accent); }
+/* Buy Me a Coffee's own button, which arrives with its own styling. This only
+   keeps it centred against the rest of the row. */
+.footer-bmc {
+  display: inline-flex;
+  align-items: center;
+}
+/* The fallback while the script loads, or if it never does. Matches the links
+   beside it rather than pretending to be the button. */
+.footer-bmc-link {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  color: var(--accent);
+}
 
 @media (max-width: 700px) {
   .footer-keys { margin-left: 0 !important; order: 3; }
