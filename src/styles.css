@@ -1140,3 +1140,71 @@ footer {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* --- esp-web-tools flasher dialog ---------------------------------------- */
+/* The install dialog is Material Web inside a shadow DOM, so none of the site's
+   own selectors reach it. Custom properties do: they inherit through shadow
+   boundaries, and esp-web-tools mounts the dialog on <body> (connect.js).
+
+   But inheritance alone is not enough. esp-web-tools' own styles.js pins a light
+   palette on the dialog's :host -- surface and its containers to #fff,
+   secondary-container to #e0e0e0, --text-color to near-black -- and a :host
+   declaration on the element beats anything inherited into it. It does NOT pin
+   --md-sys-color-on-surface, which is why theming through :root alone produced
+   the worst of both: white surface, near-white text.
+
+   So the mapping is declared twice. On :root for everything that inherits
+   normally, and on ewt-install-dialog itself, where a rule from the outer
+   document outranks the component's own :host block. Everything in the dialog --
+   buttons, the select, the text field, the progress ring, the list -- draws from
+   this same token set, and applyTheme() rewrites the site variables underneath
+   it, so the dialog re-themes live with the rest of the page. */
+:root,
+ewt-install-dialog {
+  /* Surfaces. The dialog body is surface-container-high; the rest carry menus,
+     the select's dropdown and the text field's fill. All four are pinned to
+     white upstream, so all four have to be named here. */
+  --md-sys-color-surface: var(--panel-bg);
+  --md-sys-color-surface-container: var(--panel-bg);
+  --md-sys-color-surface-container-low: var(--panel-bg);
+  --md-sys-color-surface-container-high: var(--panel-alt);
+  --md-sys-color-surface-container-highest: var(--panel-strong);
+
+  /* Text on those surfaces. --text-color is esp-web-tools' own name for the
+     same idea and is pinned to rgba(0,0,0,.6) upstream. */
+  --md-sys-color-on-surface: var(--text-main);
+  --md-sys-color-on-surface-variant: var(--text-dim);
+  --text-color: var(--text-main);
+
+  /* Accents: buttons, links, focus rings, the progress ring, the checkbox.
+     Upstream pins primary to #03a9f4 and secondary-container to #e0e0e0. */
+  --md-sys-color-primary: var(--accent);
+  --md-sys-color-on-primary: var(--text-on-accent);
+  --md-sys-color-primary-container: var(--panel-strong);
+  --md-sys-color-secondary: var(--accent);
+  --md-sys-color-secondary-container: var(--select-bg);
+  --md-sys-color-on-secondary-container: var(--text-main);
+  --md-sys-color-tertiary: var(--accent);
+  --md-sys-color-tertiary-container: var(--panel-alt);
+
+  /* Rules and edges. */
+  --md-sys-color-outline: var(--divider-hi);
+  --md-sys-color-outline-variant: var(--divider);
+
+  /* Inverse pair, used by the snackbar-style surfaces. */
+  --md-sys-color-inverse-surface: var(--text-main);
+  --md-sys-color-inverse-on-surface: var(--bg-main);
+
+  /* Scrim and shadow stay black whatever the theme: Material applies its own
+     opacity to them, and tinting them with a palette colour muddies the dim
+     behind the dialog rather than darkening it. */
+  --md-sys-color-scrim: #000000;
+  --md-sys-color-shadow: #000000;
+
+  /* Failure states. Deliberately not drawn from the palette -- a flash that
+     went wrong should read as wrong in any theme, including the ones whose
+     accent is itself red. --danger-color is esp-web-tools' own name for it. */
+  --md-sys-color-error: #e0564f;
+  --md-sys-color-on-error-container: var(--text-main);
+  --danger-color: #e0564f;
+}
