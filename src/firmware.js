@@ -19,11 +19,10 @@ const ASSET_SLUG = {
   'tlora-pager-tft': 'tlora-pager-tft',
   'cardputer-cap': 'cardputer-cap',
   'heltec-v4': 'heltec',
-  // Kept although no device entry points at it any more. The V4 ships one
-  // firmware for both orientations now (camillia-mt#77); `heltec-vertical` is
-  // still published, but only as the migration asset that brings units off the
-  // old separate vertical build — it seeds a device that has never had the
-  // setting to portrait, which is the wrong default for a fresh browser flash.
+  // No device entry points at these, and no release publishes them either:
+  // orientation is a runtime setting now (camillia-mt#77), so the -vertical
+  // envs are USB-flash-only builds with the portrait default pre-set. The
+  // mappings stay so the names resolve if one is ever published by hand.
   'heltec-v4-vertical': 'heltec-vertical',
   // env_out_name() in release.sh only rewrites the two heltec-v4 slugs; every
   // other env keeps its own name, these included.

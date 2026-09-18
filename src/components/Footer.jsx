@@ -23,6 +23,8 @@ export default function Footer() {
           <a href="https://github.com/oumike/camillia-mt" target="_blank" rel="noreferrer">Source</a>
           <a href="https://github.com/oumike/camillia-mt/releases" target="_blank" rel="noreferrer">Releases</a>
           <a href="https://github.com/oumike/camillia-mt/blob/main/LICENSE.md" target="_blank" rel="noreferrer">License</a>
+          <a className="footer-support" href="https://buymeacoffee.com/oumike"
+             target="_blank" rel="noreferrer">Buy me a coffee</a>
         </p>
       </div>
     </footer>
