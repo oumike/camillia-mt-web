@@ -33,6 +33,9 @@ Releases publish an image to GHCR, so nothing needs building to run the site:
 docker run --rm -p 8080:80 ghcr.io/oumike/camillia-mt-web:latest
 ```
 
+The image is published for **`linux/amd64` and `linux/arm64`**, so it runs on a
+Raspberry Pi as well as an x86 box.
+
 The published image is **baked for the `/camillia/` subpath** — Vite rewrites
 every asset URL at build time, so this is not runtime-tunable. Open
 <http://localhost:8080/camillia/>, not the root.

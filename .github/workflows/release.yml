@@ -214,6 +214,13 @@ jobs:
           git commit -m "Release ${{ steps.version.outputs.tag }} [skip ci]"
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
+      - name: Set up QEMU
+        # Strictly unnecessary today — the only per-architecture stage is the
+        # nginx one and it has no RUN to emulate — but it costs a few seconds
+        # and means adding a RUN there later fails to build rather than failing
+        # to boot on the server.
+        uses: docker/setup-qemu-action@v3
+
       - name: Set up Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -247,14 +254,14 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             VITE_BASE_PATH=${{ env.VITE_BASE_PATH }}
-          # amd64 only. The deployment target is one x86 server, and building
-          # arm64 under QEMU would emulate `npm ci` and a Vite build for an
-          # architecture nothing runs. If that changes, the cheap route is
-          # `FROM --platform=$BUILDPLATFORM node:20-alpine AS build` in the
-          # Dockerfile: the build stage then runs once, natively, and only the
-          # nginx serve stage is materialised per architecture. Note that
-          # load:true cannot load a multi-platform manifest, so this step would
-          # have to stay single-arch even then.
+          # Single-arch here, and only here: load:true cannot load a
+          # multi-platform manifest into the runner's daemon, and this image
+          # exists to be started and probed by the next step. The published
+          # image is built multi-arch further down.
+          #
+          # The runner is amd64, so this is the native build — the arm64 variant
+          # differs only in the nginx base layer, since the build stage is
+          # pinned to $BUILDPLATFORM and emits the same static files either way.
           platforms: linux/amd64
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -326,9 +333,26 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             VITE_BASE_PATH=${{ env.VITE_BASE_PATH }}
-          platforms: linux/amd64
-          # Served from the cache the build step above filled, so this is a layer
-          # push rather than a second compile.
+          # Both, and both deliberately.
+          #
+          # arm64 is what the site actually runs on: the host is a Raspberry Pi 5,
+          # which asks for linux/arm64/v8 — matched by the canonical linux/arm64
+          # this produces, v8 being the default variant. This was amd64-only on
+          # the reasoning that "the deployment target is one x86 server", which
+          # was an assumption nobody had checked; `docker compose pull` on the
+          # real host failed with "no matching manifest for linux/arm64/v8".
+          #
+          # amd64 stays because the Pi is explicitly "for the time being", and
+          # because a developer box is not one. Dropping it would trade this
+          # failure for the same failure pointing the other way, on whatever the
+          # host becomes next.
+          #
+          # Cheap because of --platform=$BUILDPLATFORM in the Dockerfile: the
+          # Node build runs once natively and only the nginx serve stage is
+          # produced per architecture, which is a layer copy with no RUN in it.
+          platforms: linux/amd64,linux/arm64
+          # Served from the cache the build step above filled, so the amd64 half
+          # is a layer push rather than a second compile.
           cache-from: type=gha
 
       - name: Push the commit and tag

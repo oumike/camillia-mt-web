@@ -93,10 +93,12 @@ if [[ "$DO_BUILD" -eq 1 ]]; then
 else
   echo "==> Pulling image (${CAMILLIA_WEB_TAG:-latest})"
   if ! "${COMPOSE[@]}" pull; then
-    echo "error: pull failed." >&2
-    echo "  If this is a 401/denied, the GHCR package is private: either make it" >&2
-    echo "  public, or run 'docker login ghcr.io' on this host with a token that" >&2
-    echo "  has read:packages." >&2
+    echo "error: pull failed. The daemon's own message is above; the two causes" >&2
+    echo "that look like a broken image name are:" >&2
+    echo "  * 401 / denied - the GHCR package is private. Make it public, or run" >&2
+    echo "    'docker login ghcr.io' here with a token that has read:packages." >&2
+    echo "  * no matching manifest for $(uname -m) - the release did not publish" >&2
+    echo "    this architecture. Check 'platforms:' in .github/workflows/release.yml." >&2
     exit 1
   fi
   echo "==> Recreating container"

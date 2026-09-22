@@ -1,5 +1,14 @@
 # --- Build stage ---
-FROM node:20-alpine AS build
+#
+# --platform=$BUILDPLATFORM pins this stage to the machine doing the building,
+# not the machine being built for. That is what makes a multi-arch image cheap
+# here: `npm ci` and `vite build` run once, natively on the runner, instead of
+# once per target under QEMU — and their output is static JS and CSS, identical
+# whatever the target architecture.
+#
+# Only the serve stage below is materialised per architecture, and it has no RUN
+# at all (two COPYs and a HEALTHCHECK), so nothing is ever emulated.
+FROM --platform=$BUILDPLATFORM node:20-alpine AS build
 WORKDIR /app
 
 COPY package.json package-lock.json* ./

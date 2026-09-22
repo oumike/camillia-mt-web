@@ -88,6 +88,9 @@ jobs:
           docker compose -f docker-compose.yml config -q
           docker compose -f docker-compose.yml -f docker-compose.dev.yml config -q
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
       - name: Set up Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -104,6 +107,28 @@ jobs:
             VITE_BASE_PATH=/camillia/
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Assemble every published architecture
+        # The image the server runs is arm64; the one smoke-tested above is the
+        # runner's amd64. Without this step an arm64-only breakage — a base tag
+        # that stops publishing arm64, a RUN added to the serve stage — would
+        # surface at release time, or worse, as a `docker compose pull` that
+        # fails on the host with "no matching manifest". Which is exactly how it
+        # was found the first time.
+        #
+        # push:false and load:false: nothing is published and nothing is loaded
+        # (a multi-platform manifest cannot be), so this only answers "does it
+        # assemble". Nearly free — the Node stage is pinned to $BUILDPLATFORM
+        # and already cached by the step above.
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: false
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            VITE_BASE_PATH=/camillia/
+          cache-from: type=gha
 
       - name: nginx config parses
         # `npm run build` cannot fail on nginx.conf, and nothing else here reads
