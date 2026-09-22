@@ -279,9 +279,13 @@ jobs:
             echo "::error::index.html does not reference /camillia/assets/ - refusing to publish"
             exit 1
           fi
-          code=$(curl -fsS -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/camillia/devices)
+          # Not /camillia/devices: public/devices/ ships as a real directory,
+          # so try_files matches $uri/ and nginx 301s to add a trailing slash.
+          # The probe has to be a path that cannot exist. See build.yml.
+          probe='/camillia/__spa_fallback_probe__'
+          code=$(curl -fsS -o /dev/null -w '%{http_code}' "http://127.0.0.1:8080${probe}")
           if [ "$code" != "200" ]; then
-            echo "::error::SPA fallback returned $code - refusing to publish"
+            echo "::error::SPA fallback returned $code for ${probe} - refusing to publish"
             exit 1
           fi
           docker rm -f rel-smoke

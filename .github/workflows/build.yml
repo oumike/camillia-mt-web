@@ -133,9 +133,17 @@ jobs:
           fi
 
           # SPA fallback under the subpath.
-          code=$(curl -fsS -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/camillia/devices)
+          #
+          # The probe path must not collide with anything real in the served
+          # root. /camillia/devices looked like an obvious route and was not:
+          # public/devices/ ships as a directory, so nginx's try_files matched
+          # $uri/ and 301'd to add a trailing slash. This site has no router at
+          # all -- navigation is in-page anchors -- so any path that cannot be a
+          # file or a directory exercises the fallback.
+          probe='/camillia/__spa_fallback_probe__'
+          code=$(curl -fsS -o /dev/null -w '%{http_code}' "http://127.0.0.1:8080${probe}")
           if [ "$code" != "200" ]; then
-            echo "::error::SPA fallback returned $code for /camillia/devices"
+            echo "::error::SPA fallback returned $code for ${probe}"
             exit 1
           fi
 
