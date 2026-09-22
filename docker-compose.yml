@@ -1,10 +1,21 @@
+# Server / default: pull the published image, never build.
+#
+# There is deliberately no `build:` section here. Compose tags a local build
+# under whatever `image:` names, so a single `docker compose up --build` would
+# silently replace the pulled GHCR image with a local one under the same tag —
+# and `docker compose ps` would look identical. The next `pull` fixes it, which
+# is exactly what makes it hard to notice.
+#
+# Local builds live in docker-compose.dev.yml, which overrides `image:` so the
+# two can never be confused:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 services:
   web:
-    build:
-      context: .
-      args:
-        VITE_BASE_PATH: ${VITE_BASE_PATH:-/camillia/}
-    image: camillia-mt-web:latest
+    # CAMILLIA_WEB_TAG is the rollback lever — `CAMILLIA_WEB_TAG=1.0.0
+    # docker compose up -d` pins an exact published version without editing a
+    # file. update-container.sh --tag sets it for you.
+    image: ghcr.io/oumike/camillia-mt-web:${CAMILLIA_WEB_TAG:-latest}
     container_name: camillia-mt-web
     restart: unless-stopped
     ports:

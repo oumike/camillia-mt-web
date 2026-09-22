@@ -1,0 +1,155 @@
+name: Build
+
+on:
+  push:
+    branches: [ main ]
+    # Skip the run for pushes that cannot change what ships. The Dockerfile,
+    # nginx.conf and docker-compose.yml are deliberately NOT in this list: all
+    # three are part of the published image, so editing one changes the artifact
+    # even though no JavaScript moved.
+    #
+    # update-container.sh is not ignored either — shellcheck below is the only
+    # static analysis this repo has, and that script is the one that runs on the
+    # production host.
+    paths-ignore:
+      - 'README.md'
+      - 'LICENSE'
+      - '.gitignore'
+      - '.claude/**'
+  pull_request:
+    branches: [ main ]
+    # No paths-ignore on pull_request, on purpose. If this workflow is ever made
+    # a required status check, a docs-only PR filtered out here never reports a
+    # result at all and the merge button stays disabled forever.
+  workflow_dispatch:
+
+# Only the newest push on a ref is worth checking.
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+# This job publishes nothing and needs nothing.
+permissions:
+  contents: read
+
+# IMPORTANT: this workflow must NOT push an image to GHCR — not even under a
+# branch- or SHA-derived tag.
+#
+# The server's update-container.sh runs `docker compose pull`, which resolves
+# ghcr.io/oumike/camillia-mt-web:latest. Any tag this job published would be one
+# `docker compose pull` away from production, from a commit nobody decided to
+# release. release.yml is the only writer of that package, and it moves :latest
+# last — after the git tag and the GitHub Release already exist. Keep push:false.
+#
+# What this job is for: proving a clean checkout still builds, and that the
+# image still assembles. A local `npm run dev` never touches the Dockerfile or
+# nginx.conf, and `npm run build` cannot fail on either of them.
+#
+# There are no tests, no linter and no typecheck in this repo — that is a real
+# gap, not an oversight in this file. `npm run build` plus the image smoke test
+# below is the whole of what can be checked today.
+
+jobs:
+  build:
+    name: Build site and image
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          # Not a preference — a copy of `node:20-alpine` in the Dockerfile,
+          # which is the only Node that ever builds the shipped artifact. CI on
+          # a different major would be a green check that says nothing about the
+          # image. Keep the two numbers in step.
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install
+        run: npm ci
+
+      - name: Build site
+        run: npm run build
+
+      - name: Shellcheck the deploy script
+        # Preinstalled on ubuntu-latest. update-container.sh runs on the
+        # production host with `set -euo pipefail`, so an unquoted expansion
+        # there fails a deploy rather than a test.
+        run: shellcheck update-container.sh
+
+      - name: Validate compose files
+        # Parses and interpolates both, which catches a broken ${VAR:-default}
+        # that would otherwise only surface on the server.
+        run: |
+          docker compose -f docker-compose.yml config -q
+          docker compose -f docker-compose.yml -f docker-compose.dev.yml config -q
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image (no push)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: camillia-mt-web:ci
+          # The real base path, so CI exercises what production gets rather than
+          # the Dockerfile's `/` default.
+          build-args: |
+            VITE_BASE_PATH=/camillia/
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: nginx config parses
+        # `npm run build` cannot fail on nginx.conf, and nothing else here reads
+        # it. This is the only check that the firmware proxy blocks are even
+        # syntactically valid.
+        run: docker run --rm --entrypoint nginx camillia-mt-web:ci -t
+
+      - name: Serve and probe
+        run: |
+          set -euo pipefail
+          docker run -d --name ci-smoke -p 8080:80 camillia-mt-web:ci
+          for _ in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8080/camillia/ >/dev/null 2>&1; then break; fi
+            sleep 1
+          done
+
+          body=$(curl -fsS http://127.0.0.1:8080/camillia/)
+
+          # The one regression nothing else catches: a change to vite.config.js's
+          # base normalisation, or a Dockerfile that stops forwarding the build
+          # arg, yields a site whose asset URLs point at / while the server only
+          # answers under /camillia/. It builds, it pushes, and every page load
+          # 404s on its own JavaScript.
+          if ! printf '%s' "$body" | grep -q '/camillia/assets/'; then
+            echo "::error::index.html does not reference /camillia/assets/ - VITE_BASE_PATH did not reach the build"
+            exit 1
+          fi
+
+          # SPA fallback under the subpath.
+          code=$(curl -fsS -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/camillia/devices)
+          if [ "$code" != "200" ]; then
+            echo "::error::SPA fallback returned $code for /camillia/devices"
+            exit 1
+          fi
+
+          docker rm -f ci-smoke
+
+      # Deliberately NOT probed: /firmware/latest and /firmware/<tag>/<file>.
+      #
+      # Both reach api.github.com / github.com from the runner. Unauthenticated
+      # GitHub requests are rate-limited per source IP, and GitHub-hosted runners
+      # share addresses with the rest of the world — so those probes would fail
+      # intermittently for reasons that have nothing to do with this repo, and
+      # the only available fix would be deleting them again.
+      #
+      # `nginx -t` above proves the blocks parse. That is all CI can honestly
+      # claim about them. If the redirect chain in @firmware_redirect ever needs
+      # real coverage, the place for it is a manually-dispatched probe of the
+      # live site after a deploy, not a runner-local call to GitHub.

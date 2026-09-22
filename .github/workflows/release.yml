@@ -1,0 +1,398 @@
+name: Release
+
+# Cuts a release end to end: picks the version, syncs the firmware fallback,
+# builds and smoke-tests the image, then publishes it to GHCR, tags the commit
+# and creates the GitHub Release.
+#
+# It is deliberately manual-only. Nothing here fires on a push or a tag, so a
+# release is always something a human asked for from the Actions tab.
+#
+# ORDER MATTERS, and it is not the obvious one. Nothing leaves this runner until
+# the image has been built AND smoke-tested: the release commit is made locally,
+# the image is built with push:false, the site is probed, and only then are the
+# branch, the tag, the image and the Release published. Cutting the tag first
+# would mean a transient GHCR or npm failure leaves a pushed tag with no image
+# behind it, and the fix would be deleting a tag from origin.
+#
+# One window remains and is worth naming rather than pretending away: if the
+# image push succeeds and the branch push then fails (branch protection, or a
+# race with another push to main), an orphan :<version> tag is left in GHCR that
+# :latest does not point at. Harmless, deletable from the package's versions
+# page, and the run fails loudly.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Exact version, e.g. 1.0.0 (blank = bump the patch of the latest tag, or 1.0.0 if there are none)'
+        type: string
+        default: ''
+      firmware_version:
+        description: "Firmware fallback baked into src/firmware.js ('auto' = oumike/camillia-mt's latest stable release)"
+        type: string
+        default: 'auto'
+      notes:
+        description: 'One-line summary prepended to the generated changelog (optional)'
+        type: string
+        default: ''
+      dry_run:
+        description: 'Build and smoke-test only: no image push, no commit, no tag, no release'
+        type: boolean
+        default: false
+
+# One release at a time, and never cancel one mid-publish.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: write        # release commit, tag, and `gh release create`
+  packages: write        # push to ghcr.io/oumike/camillia-mt-web
+
+env:
+  # The published image is baked for https://www.sumat.org/camillia/. Vite
+  # rewrites every asset URL at build time, so this is NOT runtime-tunable: a
+  # differently-based deployment needs a different image, not a different
+  # environment variable on the container.
+  #
+  # Deliberately a constant and not a workflow_dispatch input. As an input it is
+  # a loaded gun — one dispatch with the field cleared publishes a root-based
+  # build under :latest and the site 404s on its own JavaScript until someone
+  # re-releases. Changing it should be an edit to a file under review.
+  #
+  # docker-compose.dev.yml carries the same default for local builds. The two
+  # are kept in step by hand; the smoke test below is what catches a drift.
+  VITE_BASE_PATH: /camillia/
+  FIRMWARE_REPO: oumike/camillia-mt
+
+jobs:
+  release:
+    name: Build, publish and tag
+    runs-on: ubuntu-latest
+    # Holds no secrets today, unlike the firmware repo's `release` environment
+    # which gates OTA_SIGNING_KEY. Kept as the hook for a required-reviewer rule
+    # on publishing, and for the record in the repo's Environments tab — so do
+    # not go looking for the secret it protects.
+    environment: release
+    timeout-minutes: 30
+
+    steps:
+      - name: Refuse to release from a non-default branch
+        # workflow_dispatch lets any ref be picked from the Actions tab. Without
+        # this, a release cut from a feature branch would tag that branch's head,
+        # publish it, and move :latest to it.
+        if: github.ref_name != 'main'
+        run: |
+          echo "::error::Releases are cut from main only (got '${{ github.ref_name }}')."
+          exit 1
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # The version is derived from the full tag list, so a shallow clone
+          # would pick the wrong one — or none at all.
+          fetch-depth: 0
+
+      - name: Configure git
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # actions/checkout leaves the local branch without an upstream, so a
+          # bare `git push` would fail.
+          git config push.default current
+
+      - name: Resolve and validate the version
+        id: version
+        env:
+          REQ_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          PREV=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' | sort -V | tail -1 || true)
+
+          if [ -n "$REQ_VERSION" ]; then
+            VERSION="${REQ_VERSION#v}"          # a pasted tag name works as-is
+          elif [ -z "$PREV" ]; then
+            # First release. The firmware repo bumps from its tag list; this repo
+            # has no tags at all, and package.json's 0.1.0 was never published
+            # under any name, so there is nothing to bump from. Seed it.
+            VERSION="1.0.0"
+          else
+            IFS=. read -r MA MI PA <<<"${PREV#v}"
+            VERSION="$MA.$MI.$((PA + 1))"
+          fi
+
+          # Strict semver, no prerelease suffix: there is no release channel here
+          # (see the note on inputs above), so a -alpha.N tag would have nowhere
+          # to be served from.
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::version must look like 1.0.0 (got '$VERSION')"
+            exit 1
+          fi
+
+          TAG="v$VERSION"
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "::error::$TAG already exists locally"
+            exit 1
+          fi
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "::error::$TAG already exists on origin"
+            exit 1
+          fi
+
+          {
+            echo "version=$VERSION"
+            echo "tag=$TAG"
+            echo "major_minor=${VERSION%.*}"
+            echo "prev=$PREV"
+          } >> "$GITHUB_OUTPUT"
+          echo "Releasing $TAG (previous: ${PREV:-none})"
+
+      - name: Sync the firmware fallback
+        id: firmware
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FW_INPUT: ${{ inputs.firmware_version }}
+        run: |
+          set -euo pipefail
+          if [ "$FW_INPUT" = "auto" ]; then
+            # The same endpoint nginx.conf's `location = /firmware/latest` relays
+            # to the devices, and for the same reason: /releases/latest is
+            # GitHub's own "latest non-draft, non-prerelease", so an alpha can
+            # never land in the fallback.
+            FW=$(gh api "repos/${FIRMWARE_REPO}/releases/latest" -q .tag_name)
+          else
+            FW="$FW_INPUT"
+          fi
+
+          if [[ ! "$FW" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::bad firmware tag '$FW'"
+            exit 1
+          fi
+
+          sed -i -E "s|^export const FIRMWARE_VERSION = '[^']*'$|export const FIRMWARE_VERSION = '${FW}'|" src/firmware.js
+
+          # sed exits 0 when it matches nothing. Without this check the workflow
+          # would happily cut a release that silently kept the old value — which
+          # is exactly the rot this step exists to stop.
+          if ! grep -qx "export const FIRMWARE_VERSION = '${FW}'" src/firmware.js; then
+            echo "::error::the FIRMWARE_VERSION line in src/firmware.js did not match the expected shape"
+            exit 1
+          fi
+          echo "firmware=$FW" >> "$GITHUB_OUTPUT"
+          echo "Firmware fallback set to $FW"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Bump the package version
+        # `npm version` rather than sed on package.json: it updates the two
+        # version fields in package-lock.json as well, which a hand-rolled edit
+        # leaves stale.
+        run: npm version "${{ steps.version.outputs.version }}" --no-git-tag-version
+
+      - name: Build site
+        # Cheap, and it fails fast if the firmware sync produced a syntactically
+        # broken src/firmware.js — before anything is committed.
+        run: |
+          npm ci
+          npm run build
+
+      - name: Commit the release locally
+        id: commit
+        run: |
+          set -euo pipefail
+          git add src/firmware.js package.json package-lock.json
+          # [skip ci] is a no-op on this job's own push — GitHub does not trigger
+          # workflows from pushes made with the default GITHUB_TOKEN — but it
+          # matters if these steps are ever run by hand, or if this switches to a
+          # PAT or App token later. Flip side worth knowing: a release commit
+          # therefore gets no build.yml run, so that is not where to look for a
+          # release's build log. This run's own smoke test is.
+          git commit -m "Release ${{ steps.version.outputs.tag }} [skip ci]"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          # type=raw, not type=semver. semver derives its value from github.ref,
+          # and at this point the ref is still refs/heads/main — the tag does not
+          # exist yet, by design.
+          #
+          # :latest is NOT set here. It is moved at the very end, after the tag
+          # and the Release exist, so the server can never pull a version that
+          # has no release behind it.
+          tags: |
+            type=raw,value=${{ steps.version.outputs.version }}
+            type=raw,value=${{ steps.version.outputs.major_minor }}
+          labels: |
+            org.opencontainers.image.version=${{ steps.version.outputs.version }}
+            org.opencontainers.image.revision=${{ steps.commit.outputs.sha }}
+            org.opencontainers.image.description=Camillia-MT info site and web flasher, built for the ${{ env.VITE_BASE_PATH }} subpath
+
+      - name: Build image (no push yet)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VITE_BASE_PATH=${{ env.VITE_BASE_PATH }}
+          # amd64 only. The deployment target is one x86 server, and building
+          # arm64 under QEMU would emulate `npm ci` and a Vite build for an
+          # architecture nothing runs. If that changes, the cheap route is
+          # `FROM --platform=$BUILDPLATFORM node:20-alpine AS build` in the
+          # Dockerfile: the build stage then runs once, natively, and only the
+          # nginx serve stage is materialised per architecture. Note that
+          # load:true cannot load a multi-platform manifest, so this step would
+          # have to stay single-arch even then.
+          platforms: linux/amd64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Smoke test the image
+        # The same probe build.yml runs. Duplicated rather than factored out: a
+        # composite action would be one more thing to keep in step, and this is
+        # the last chance to catch a broken base path before the image is public.
+        run: |
+          set -euo pipefail
+          IMAGE=$(printf '%s\n' "${{ steps.meta.outputs.tags }}" | head -1)
+          docker run -d --name rel-smoke -p 8080:80 "$IMAGE"
+          for _ in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8080/camillia/ >/dev/null 2>&1; then break; fi
+            sleep 1
+          done
+
+          docker run --rm --entrypoint nginx "$IMAGE" -t
+
+          body=$(curl -fsS http://127.0.0.1:8080/camillia/)
+          if ! printf '%s' "$body" | grep -q '/camillia/assets/'; then
+            echo "::error::index.html does not reference /camillia/assets/ - refusing to publish"
+            exit 1
+          fi
+          code=$(curl -fsS -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/camillia/devices)
+          if [ "$code" != "200" ]; then
+            echo "::error::SPA fallback returned $code - refusing to publish"
+            exit 1
+          fi
+          docker rm -f rel-smoke
+
+      - name: Stop here on a dry run
+        if: inputs.dry_run
+        run: |
+          {
+            echo "### Dry run - nothing published"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Would tag | \`${{ steps.version.outputs.tag }}\` |"
+            echo "| Would push | \`${{ steps.meta.outputs.tags }}\` |"
+            echo "| Firmware fallback | \`${{ steps.firmware.outputs.firmware }}\` |"
+            echo ""
+            echo "The image built and passed its smoke test. No commit, tag, image or release was published."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Log in to GHCR
+        if: '!inputs.dry_run'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          # The default token is enough: the package namespace matches the repo
+          # owner, so `packages: write` covers creating and pushing it. A PAT
+          # would only be needed to publish into a different org.
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push the image
+        if: '!inputs.dry_run'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VITE_BASE_PATH=${{ env.VITE_BASE_PATH }}
+          platforms: linux/amd64
+          # Served from the cache the build step above filled, so this is a layer
+          # push rather than a second compile.
+          cache-from: type=gha
+
+      - name: Push the commit and tag
+        if: '!inputs.dry_run'
+        run: |
+          set -euo pipefail
+          git push
+          git tag -a "${{ steps.version.outputs.tag }}" -m "Release ${{ steps.version.outputs.tag }}"
+          git push origin "${{ steps.version.outputs.tag }}"
+
+      - name: Create the GitHub Release
+        if: '!inputs.dry_run'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SUMMARY: ${{ inputs.notes }}
+          TAG: ${{ steps.version.outputs.tag }}
+          PREV: ${{ steps.version.outputs.prev }}
+          IMAGE_VERSION: ${{ steps.version.outputs.version }}
+          FIRMWARE: ${{ steps.firmware.outputs.firmware }}
+        run: |
+          set -euo pipefail
+          {
+            if [ -n "$SUMMARY" ]; then printf '%s\n\n' "$SUMMARY"; fi
+            echo "Container image: \`ghcr.io/${{ github.repository }}:${IMAGE_VERSION}\`"
+            echo ""
+            echo "Built for the \`${VITE_BASE_PATH}\` subpath. Firmware fallback synced to \`${FIRMWARE}\`."
+          } > /tmp/notes.md
+
+          args=(--title "$TAG" --notes-file /tmp/notes.md)
+          # --generate-notes needs a previous tag to diff against. On the first
+          # release there is none, and asking for them anyway produces a dump of
+          # the whole history.
+          if [ -n "$PREV" ]; then
+            args+=(--generate-notes --notes-start-tag "$PREV")
+          fi
+          gh release create "$TAG" "${args[@]}"
+
+      - name: Move :latest
+        if: '!inputs.dry_run'
+        # Last, and deliberately so: until this runs, `docker compose pull` on the
+        # server is a no-op, so the site can never be running a version whose tag
+        # and Release do not already exist.
+        #
+        # imagetools retags the existing manifest in the registry — no rebuild,
+        # no layer upload, and :latest is guaranteed to be the exact bytes that
+        # passed the smoke test above.
+        run: |
+          set -euo pipefail
+          docker buildx imagetools create \
+            -t "ghcr.io/${{ github.repository }}:latest" \
+            "ghcr.io/${{ github.repository }}:${{ steps.version.outputs.version }}"
+
+      - name: Summary
+        if: '!inputs.dry_run'
+        run: |
+          {
+            echo "### Released ${{ steps.version.outputs.tag }}"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Image | \`ghcr.io/${{ github.repository }}:${{ steps.version.outputs.version }}\` |"
+            echo "| Also tagged | \`${{ steps.version.outputs.major_minor }}\`, \`latest\` |"
+            echo "| Commit | \`${{ steps.commit.outputs.sha }}\` |"
+            echo "| Firmware fallback | \`${{ steps.firmware.outputs.firmware }}\` |"
+            echo ""
+            echo "On the server:"
+            echo ""
+            echo '```'
+            echo "./update-container.sh"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

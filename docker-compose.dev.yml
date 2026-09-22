@@ -1,0 +1,21 @@
+# Local build overlay. Use with the base file, never on its own:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+#
+# The `image:` override is the whole point — a local build is tagged
+# camillia-mt-web:local and so can never be mistaken for, or overwrite, the
+# published ghcr.io image the server runs.
+#
+# Most local work is `npm run dev`. This path exists to exercise nginx.conf,
+# which the Vite dev server never touches.
+services:
+  web:
+    build:
+      context: .
+      args:
+        # Kept in step with VITE_BASE_PATH in .github/workflows/release.yml by
+        # hand. The CI smoke test greps the built index.html for
+        # /camillia/assets/, which is what catches a drift between the two.
+        VITE_BASE_PATH: ${VITE_BASE_PATH:-/camillia/}
+    image: camillia-mt-web:local
+    pull_policy: build
