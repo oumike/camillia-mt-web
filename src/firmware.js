@@ -3,7 +3,7 @@ import { withBase } from './basePath'
 // Configuration for the in-browser flasher. FIRMWARE_VERSION is the fallback
 // used if the GitHub API call fails (rate limit, offline, etc.) — the live
 // version list is fetched at page load via releaseCatalog().
-export const FIRMWARE_VERSION = 'v2.5.0'
+export const FIRMWARE_VERSION = 'v5.3.3'
 export const REPO = 'oumike/camillia-mt'
 
 // Same-origin proxy path. Vite (dev) and nginx (prod) forward /firmware/<tag>/<file>
