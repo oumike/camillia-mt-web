@@ -31,6 +31,8 @@ const ASSET_SLUG = {
   'mesh-deck': 'mesh-deck',
   'm9': 'm9',
   'wio-tracker-l2': 'wio-tracker-l2',
+  'p4-amoled-sx1262': 'p4-amoled-sx1262',
+  'p4-amoled-lr2021': 'p4-amoled-lr2021',
 }
 
 export function firmwareAssetName(env, version) {
@@ -43,8 +45,8 @@ export function firmwareUrl(env, version) {
   return `${PROXY_BASE}/${version}/${firmwareAssetName(env, version)}`
 }
 
-// esp-web-tools manifest. flash.sh writes one bin at offset 0x0 for esp32s3,
-// so the manifest mirrors that: one part, offset 0, chipFamily ESP32-S3. The
+// esp-web-tools manifest. release.sh writes one merged bin at offset 0x0, so
+// the manifest mirrors that with the chip family declared by the device. The
 // part URL must be absolute — esp-web-tools calls `new URL(path)` without a
 // base — so we resolve against window.location.origin (same-origin proxy).
 export function manifestFor(device, version) {
@@ -55,7 +57,7 @@ export function manifestFor(device, version) {
     new_install_prompt_erase: true,
     builds: [
       {
-        chipFamily: 'ESP32-S3',
+        chipFamily: device.chip,
         parts: [
           { path: `${origin}${firmwareUrl(device.env, version)}`, offset: 0 },
         ],

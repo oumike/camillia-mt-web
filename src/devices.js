@@ -94,4 +94,20 @@ export const DEVICES = [
     desc: 'SX1262 LoRa, 320×240 touch panel, GNSS, ES8311 audio, 16 MB flash and 8 MB PSRAM. Touch-first UI with an on-screen keyboard, optional BLE keyboard, and SD_MMC storage for config import/export. Brightness, battery, audio, SD and BLE support are not yet verified on physical hardware.',
     image: withBase('/devices/wio-tracker-l2.svg'),
   },
+  {
+    env: 'p4-amoled-sx1262',
+    name: 'LilyGo T-Display P4 AMOLED + SX1262',
+    chip: 'ESP32-P4',
+    desc: 'SX1262 LoRa, 4.1″ 568×1232 AMOLED, capacitive touch, L76K GNSS, microSD and 32 MB PSRAM. Touch-first portrait UI with an on-screen keyboard and automatic support for the detachable 68-key keyboard.',
+    link: 'https://lilygo.cc/products/t-display-p4',
+    image: withBase('/devices/tdisplay-p4.png'),
+  },
+  {
+    env: 'p4-amoled-lr2021',
+    name: 'LilyGo T-Display P4 AMOLED + LR2021',
+    chip: 'ESP32-P4',
+    desc: 'LR2021 LoRa, 4.1″ 568×1232 AMOLED, capacitive touch, L76K GNSS, microSD and 32 MB PSRAM. Touch-first portrait UI with an on-screen keyboard and automatic support for the detachable 68-key keyboard.',
+    link: 'https://lilygo.cc/products/t-display-p4',
+    image: withBase('/devices/tdisplay-p4.png'),
+  },
 ]
