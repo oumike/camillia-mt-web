@@ -16,10 +16,10 @@ export default function AI() {
           <p>
             This project is a bit more than a proof of concept, but it has no
             commercial ambitions. I'm doing it for fun and to learn. Contribute,
-            use it, or ignore it.
+            use it, or ignore it. Hi
           </p>
         </div>
       </div>
     </section>
-  )
+  );
 }
