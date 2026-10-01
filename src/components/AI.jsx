@@ -16,7 +16,7 @@ export default function AI() {
           <p>
             This project is a bit more than a proof of concept, but it has no
             commercial ambitions. I'm doing it for fun and to learn. Contribute,
-            use it, or ignore it. Hi
+            use it, or ignore it.
           </p>
         </div>
       </div>
