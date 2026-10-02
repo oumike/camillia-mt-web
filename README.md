@@ -2,7 +2,7 @@
 
 Information site and browser-based firmware flasher for
 [Camillia-MT](https://github.com/oumike/camillia-mt) — Meshtastic-compatible
-mesh radio firmware for ten ESP32-S3 and ESP32-P4 handheld LoRa devices.
+mesh radio firmware for twelve ESP32-S3 and ESP32-P4 handheld LoRa devices.
 
 The site mirrors the firmware's 13 hand-tuned UI themes (each with a dark and
 light mode), lets you switch the page theme to preview them, and ships a

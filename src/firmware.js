@@ -31,6 +31,7 @@ const ASSET_SLUG = {
   'mesh-deck': 'mesh-deck',
   'm9': 'm9',
   'wio-tracker-l2': 'wio-tracker-l2',
+  'crowpanel-35': 'crowpanel-35',
   'p4-amoled-sx1262': 'p4-amoled-sx1262',
   'p4-amoled-lr2021': 'p4-amoled-lr2021',
 }

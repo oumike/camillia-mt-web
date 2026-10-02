@@ -9,7 +9,7 @@ const LEAD = [
 
 const REST = [
   { src: withBase('/screenshots/bubbles.png'),      title: 'Bubble chat',      caption: 'The same timeline as bubbles, with your messages right-aligned in the accent color.' },
-  { src: withBase('/screenshots/channels.png'),     title: 'Channel switcher', caption: 'Move between all eight channels, each independently keyed. The list slides in from the left: tap the channel name, swipe in from the screen edge, or press C on the chat screen.' },
+  { src: withBase('/screenshots/channels.png'),     title: 'Channel switcher', caption: 'Move between all ten channels, each independently keyed. The list slides in from the left: tap the channel name, swipe in from the screen edge, or press C on the chat screen.' },
   { src: withBase('/screenshots/dm.png'),           title: 'Direct messages',  caption: 'One-to-one conversations addressed by node ID, kept in their own tab.' },
   { src: withBase('/screenshots/compose.png'),      title: 'Compose',          caption: 'Enter sends, Backspace on an empty line cancels.' },
   { src: withBase('/screenshots/emoji.png'),        title: 'Emoji picker',     caption: 'Arrows to move, Enter to insert, Backspace to close.' },
