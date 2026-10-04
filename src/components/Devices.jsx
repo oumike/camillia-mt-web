@@ -1,18 +1,13 @@
-import { DEVICES } from "../devices.js";
-
-export default function Devices() {
+export default function Devices({ devices, title, intro }) {
   return (
     <section id="devices" className="band">
       <div className="container">
         <p className="eyebrow">Hardware</p>
-        <h2>Twelve boards, one firmware</h2>
-        <p className="measure">
-          Every profile below is built from the same source tree. Pick your
-          board in the flasher and it writes the matching build.
-        </p>
+        <h2>{title}</h2>
+        <p className="measure">{intro}</p>
 
         <div className="grid device-grid">
-          {DEVICES.map((d) => (
+          {devices.map((d) => (
             <article className="panel device" key={d.env}>
               <header className="device-head">
                 <h3>

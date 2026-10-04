@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import 'esp-web-tools'
-import { DEVICES } from '../devices.js'
 import {
-  FIRMWARE_VERSION,
   releaseCatalog,
   versionsForEnv,
   manifestDataUrl,
   firmwareUrl,
+  releaseUrl,
 } from '../firmware.js'
 import DebugReport from './DebugReport.jsx'
 
@@ -16,9 +15,12 @@ function serialSupported() {
 
 const FOCUSABLE = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
 
-export default function Flasher() {
+// `product` is MT_FIRMWARE or CS_FIRMWARE from firmware.js; `devices` is that
+// firmware's board list. Debug & report speaks camillia-mt's serial health
+// commands, so it is only offered where the firmware answers them.
+export default function Flasher({ product, devices, debugReport = false }) {
   const [supported, setSupported] = useState(true)
-  const [env, setEnv] = useState(DEVICES[0].env)
+  const [env, setEnv] = useState(devices[0].env)
   const [catalog, setCatalog] = useState(null)
   const [version, setVersion] = useState(null)
   const [showNotes, setShowNotes] = useState(false)
@@ -32,7 +34,7 @@ export default function Flasher() {
 
   useEffect(() => {
     let cancelled = false
-    releaseCatalog()
+    releaseCatalog(product.repo)
       .then(items => {
         if (!cancelled) {
           setCatalog(items)
@@ -45,11 +47,11 @@ export default function Flasher() {
         }
       })
     return () => { cancelled = true }
-  }, [])
+  }, [product.repo])
 
   const device = useMemo(
-    () => DEVICES.find(d => d.env === env) ?? DEVICES[0],
-    [env]
+    () => devices.find(d => d.env === env) ?? devices[0],
+    [devices, env]
   )
 
   useEffect(() => { setImageFailed(false) }, [device.env])
@@ -58,25 +60,29 @@ export default function Flasher() {
   // stable-only, so prereleases never reach the picker.
   //
   // When the GitHub API is unreachable the catalog comes back empty and the
-  // hardcoded FIRMWARE_VERSION stands in: it has no release behind it to check,
-  // but dropping it would leave the control with nothing at all.
+  // product's hardcoded fallbackVersion stands in: it has no release behind it
+  // to check, but dropping it would leave the control with nothing at all. A
+  // product without one (the chat server) shows that there is nothing to flash.
   const versions = useMemo(() => {
     if (catalog === null) return []
-    const fromCatalog = versionsForEnv(catalog, device.env)
+    const fromCatalog = versionsForEnv(product, catalog, device.env)
     if (fromCatalog.length) return fromCatalog
-    return [FIRMWARE_VERSION]
-  }, [catalog, device.env])
+    return product.fallbackVersion ? [product.fallbackVersion] : []
+  }, [product, catalog, device.env])
 
   useEffect(() => {
-    if (!versions.length) return
+    if (!versions.length) {
+      setVersion(null)
+      return
+    }
     if (!version || !versions.includes(version)) {
       setVersion(versions[0])
     }
   }, [versions, version])
 
   const manifestUrl = useMemo(
-    () => version ? manifestDataUrl(device, version) : null,
-    [device.env, version]
+    () => version ? manifestDataUrl(product, device, version) : null,
+    [product, device.env, version]
   )
 
   const selectedRelease = useMemo(() => {
@@ -86,7 +92,7 @@ export default function Flasher() {
 
   const selectedNotes = (selectedRelease?.notes ?? '').trim()
   const selectedReleaseUrl = selectedRelease?.url
-    || (version ? `https://github.com/oumike/camillia-mt/releases/tag/${encodeURIComponent(version)}` : '')
+    || (version ? releaseUrl(product, version) : '')
 
   function openNotes() {
     notesReturnRef.current = document.activeElement
@@ -156,7 +162,7 @@ export default function Flasher() {
               <label className="flasher-select">
                 <span>Device</span>
                 <select value={env} onChange={e => setEnv(e.target.value)}>
-                  {DEVICES.map(d => (
+                  {devices.map(d => (
                     <option key={d.env} value={d.env}>
                       {d.name}
                     </option>
@@ -188,7 +194,7 @@ export default function Flasher() {
                   {version ? (
                     <a
                       className="flasher-row-btn"
-                      href={firmwareUrl(device.env, version)}
+                      href={firmwareUrl(product, device.env, version)}
                       download
                     >
                       Download .bin
@@ -215,17 +221,28 @@ export default function Flasher() {
                   </esp-web-install-button>
                 </>
               ) : (
-                <button className="btn" disabled>Loading releases…</button>
+                <button className="btn" disabled>
+                  {catalog === null ? 'Loading releases…' : 'No release yet'}
+                </button>
               )}
-              <DebugReport
-                device={device}
-                version={version}
-                supported={supported}
-              />
+              {debugReport && (
+                <DebugReport
+                  device={device}
+                  version={version}
+                  supported={supported}
+                />
+              )}
             </div>
-            {versionStale && (
+            {versionStale ? (
               <p className="browser-note">
-                Couldn't reach the GitHub API release list — falling back to {FIRMWARE_VERSION}.
+                Couldn't reach the GitHub API release list
+                {product.fallbackVersion ? <> — falling back to {product.fallbackVersion}.</> : '.'}
+              </p>
+            ) : catalog !== null && !versions.length && (
+              <p className="browser-note">
+                No {product.name} release has been published for this board
+                yet. Watch the{' '}
+                <a href={`https://github.com/${product.repo}/releases`} target="_blank" rel="noreferrer">releases page</a>.
               </p>
             )}
           </div>

@@ -42,25 +42,51 @@ export function firmwareAssetName(env, version) {
   return `camillia-mt-${slug}-${version}.bin`
 }
 
-export function firmwareUrl(env, version) {
-  return `${PROXY_BASE}/${version}/${firmwareAssetName(env, version)}`
+// The two firmwares the flasher can write. Each has its own release repo, its
+// own same-origin proxy path (nginx.conf / vite.config.js), and its own asset
+// naming. fallbackVersion stands in when the GitHub API is unreachable; the
+// chat server has none, since a tag it guessed at may not exist.
+export const MT_FIRMWARE = {
+  name: 'Camillia-MT',
+  repo: REPO,
+  proxyBase: PROXY_BASE,
+  assetName: firmwareAssetName,
+  fallbackVersion: FIRMWARE_VERSION,
+}
+
+// Release asset names from camillia-chat-server's release.sh: the PlatformIO
+// env name as is, so no slug table.
+export const CS_FIRMWARE = {
+  name: 'Camillia Chat Server',
+  repo: 'oumike/camillia-chat-server',
+  proxyBase: withBase('/cs-firmware'),
+  assetName: (env, version) => `camillia-chat-server-${env}-${version}.bin`,
+  fallbackVersion: null,
+}
+
+export function firmwareUrl(product, env, version) {
+  return `${product.proxyBase}/${version}/${product.assetName(env, version)}`
+}
+
+export function releaseUrl(product, version) {
+  return `https://github.com/${product.repo}/releases/tag/${encodeURIComponent(version)}`
 }
 
 // esp-web-tools manifest. release.sh writes one merged bin at offset 0x0, so
 // the manifest mirrors that with the chip family declared by the device. The
 // part URL must be absolute — esp-web-tools calls `new URL(path)` without a
 // base — so we resolve against window.location.origin (same-origin proxy).
-export function manifestFor(device, version) {
+export function manifestFor(product, device, version) {
   const origin = typeof window !== 'undefined' ? window.location.origin : ''
   return {
-    name: `Camillia-MT (${device.name})`,
+    name: `${product.name} (${device.name})`,
     version,
     new_install_prompt_erase: true,
     builds: [
       {
         chipFamily: device.chip,
         parts: [
-          { path: `${origin}${firmwareUrl(device.env, version)}`, offset: 0 },
+          { path: `${origin}${firmwareUrl(product, device.env, version)}`, offset: 0 },
         ],
       },
     ],
@@ -69,21 +95,21 @@ export function manifestFor(device, version) {
 
 // Encode the manifest as a data: URL so esp-web-install-button can fetch it
 // without any lifecycle (blob URLs can be revoked before the button reads them).
-export function manifestDataUrl(device, version) {
-  const json = JSON.stringify(manifestFor(device, version))
+export function manifestDataUrl(product, device, version) {
+  const json = JSON.stringify(manifestFor(product, device, version))
   return `data:application/json;charset=utf-8,${encodeURIComponent(json)}`
 }
 
 // Fetch all GitHub releases (paginated) and return an ordered catalog:
 // [{ tag, assetNames, notes, url } ...], newest first. Drafts are skipped.
-export async function releaseCatalog() {
+export async function releaseCatalog(repo = REPO) {
   const perPage = 100
   const maxPages = 10
   const out = []
 
   for (let page = 1; page <= maxPages; page += 1) {
     const res = await fetch(
-      `https://api.github.com/repos/${REPO}/releases?per_page=${perPage}&page=${page}`,
+      `https://api.github.com/repos/${repo}/releases?per_page=${perPage}&page=${page}`,
       {
         headers: { Accept: 'application/vnd.github+json' },
       }
@@ -114,7 +140,8 @@ export async function releaseCatalog() {
     if (data.length < perPage) break
   }
 
-  if (!out.length) throw new Error('No release tags found')
+  // An empty list is an answer, not a failure: the chat server had no release
+  // at all when its page went up, and that must not read as "GitHub is down".
   return out
 }
 
@@ -125,18 +152,18 @@ export async function releaseCatalog() {
 // be tested by people who already know how to get one -- by tag on GitHub, or
 // over the device's own alpha OTA route -- and offering them beside the stable
 // list on the front page invites installing one by accident.
-function releasesForEnv(catalog, env) {
+function releasesForEnv(product, catalog, env) {
   if (!Array.isArray(catalog)) return []
   return catalog.filter(rel => {
     if (!rel || !rel.tag || !Array.isArray(rel.assetNames)) return false
     if (rel.prerelease) return false
-    return rel.assetNames.includes(firmwareAssetName(env, rel.tag))
+    return rel.assetNames.includes(product.assetName(env, rel.tag))
   })
 }
 
 // Return stable version tags that have a flashable asset for this env.
-export function versionsForEnv(catalog, env) {
-  return releasesForEnv(catalog, env).map(rel => rel.tag)
+export function versionsForEnv(product, catalog, env) {
+  return releasesForEnv(product, catalog, env).map(rel => rel.tag)
 }
 
 // Backward-compatible helper for callers that still want a single latest tag.

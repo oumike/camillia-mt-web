@@ -21,6 +21,13 @@ export default defineConfig({
         followRedirects: true,
         rewrite: (path) => path.replace(/^\/firmware\//, '/oumike/camillia-mt/releases/download/'),
       },
+      // The chat server page's flasher: same proxy, camillia-chat-server's releases.
+      '/cs-firmware/': {
+        target: 'https://github.com',
+        changeOrigin: true,
+        followRedirects: true,
+        rewrite: (path) => path.replace(/^\/cs-firmware\//, '/oumike/camillia-chat-server/releases/download/'),
+      },
     },
   },
 })

@@ -1,4 +1,4 @@
-const STEPS = [
+export const MT_STEPS = [
   {
     title: 'Join the setup network',
     body: <>After the first boot the device hosts a Wi-Fi access point called <span className="kbd">camillia-mt</span>. Connect to it from a phone or laptop.</>,
@@ -13,14 +13,14 @@ const STEPS = [
   },
 ]
 
-export default function Docs() {
+export default function Docs({ steps = MT_STEPS, title = 'Three steps to a node on the mesh' }) {
   return (
     <section id="docs" className="band">
       <div className="container">
         <p className="eyebrow">First run</p>
-        <h2>Three steps to a node on the mesh</h2>
+        <h2>{title}</h2>
         <ol className="steps" role="list">
-          {STEPS.map((s, i) => (
+          {steps.map((s, i) => (
             <li key={s.title}>
               <span className="step-n">{String(i + 1).padStart(2, '0')}</span>
               <div>

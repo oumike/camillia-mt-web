@@ -5,17 +5,38 @@ import ModeToggle from './ModeToggle.jsx'
 // The device navigates by single keypress, so the site does too. `key` is both
 // the shortcut and the bracketed letter shown in the link, exactly like the
 // firmware's footer legend.
-const LINKS = [
-  { key: 'd', label: 'evices',     href: '#devices' },
-  { key: 's', label: 'creenshots', href: '#screenshots' },
-  { key: 't', label: 'hemes',      href: '#themes' },
-  { key: 'f', label: 'lash',       href: '#flash' },
-]
+const SECTIONS = {
+  mt: [
+    { key: 'd', label: 'evices',     href: '#devices' },
+    { key: 's', label: 'creenshots', href: '#screenshots' },
+    { key: 't', label: 'hemes',      href: '#themes' },
+    { key: 'f', label: 'lash',       href: '#flash' },
+  ],
+  cs: [
+    { key: 'd', label: 'evices',     href: '#devices' },
+    { key: 'f', label: 'lash',       href: '#flash' },
+  ],
+}
 
-const EXTERNAL = [
-  { label: 'Releases', href: 'https://github.com/oumike/camillia-mt/releases' },
-  { label: 'License',  href: 'https://github.com/oumike/camillia-mt/blob/main/LICENSE.md' },
-  { label: 'GitHub',   href: 'https://github.com/oumike/camillia-mt' },
+const REPOS = {
+  mt: 'oumike/camillia-mt',
+  cs: 'oumike/camillia-chat-server',
+}
+
+function externalLinks(repo) {
+  return [
+    { label: 'Releases', href: `https://github.com/${repo}/releases` },
+    { label: 'License',  href: `https://github.com/${repo}/blob/main/LICENSE.md` },
+    { label: 'GitHub',   href: `https://github.com/${repo}` },
+  ]
+}
+
+// One brand per firmware, each a plain link to its page (a full load: the two
+// pages share nothing but the theme, which lives in localStorage). On its own
+// page a brand scrolls back to the top instead.
+const BRANDS = [
+  { page: 'mt', suffix: '/mt', path: '/' },
+  { page: 'cs', suffix: '/cs', path: '/cs/' },
 ]
 
 function isTypingTarget(el) {
@@ -24,15 +45,17 @@ function isTypingTarget(el) {
   return ['INPUT', 'SELECT', 'TEXTAREA'].includes(el.tagName)
 }
 
-export default function Nav({ mode, modeLocked, onModeChange }) {
+export default function Nav({ page, mode, modeLocked, onModeChange }) {
   const [open, setOpen] = useState(false)
+  const links = SECTIONS[page]
+  const external = externalLinks(REPOS[page])
 
   useEffect(() => {
     const onKeyDown = e => {
       if (e.metaKey || e.ctrlKey || e.altKey) return
       if (isTypingTarget(e.target)) return
       if (document.querySelector('[role="dialog"]')) return
-      const hit = LINKS.find(l => l.key === e.key.toLowerCase())
+      const hit = links.find(l => l.key === e.key.toLowerCase())
       if (!hit) return
       const target = document.querySelector(hit.href)
       if (!target) return
@@ -44,22 +67,31 @@ export default function Nav({ mode, modeLocked, onModeChange }) {
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [])
+  }, [links])
 
   return (
     <header className="nav">
       <div className="nav-inner">
-        <a href="#top" className="brand">
-          <img src={withBase('/favicon.svg')} alt="" width="28" height="28" />
-          <span>Camillia<span className="brand-dim">/mt</span></span>
-        </a>
+        <img className="brand-mark" src={withBase('/favicon.svg')} alt="" width="28" height="28" />
+        <div className="brands">
+          {BRANDS.map(b => (
+            <a
+              key={b.page}
+              href={b.page === page ? '#top' : withBase(b.path)}
+              className="brand"
+              aria-current={b.page === page ? 'page' : undefined}
+            >
+              <span><span className="brand-word">Camillia</span><span className="brand-dim">{b.suffix}</span></span>
+            </a>
+          ))}
+        </div>
 
         <div className="nav-spacer" />
 
         <nav className={open ? 'nav-links nav-links-open' : 'nav-links'}
              aria-label="Sections">
           <ul role="list">
-            {LINKS.map(l => (
+            {links.map(l => (
               <li key={l.key}>
                 <a href={l.href} onClick={() => setOpen(false)}>
                   (<b>{l.key.toUpperCase()}</b>){l.label}
@@ -68,7 +100,7 @@ export default function Nav({ mode, modeLocked, onModeChange }) {
             ))}
           </ul>
           <ul role="list" className="nav-external">
-            {EXTERNAL.map(l => (
+            {external.map(l => (
               <li key={l.label}>
                 <a href={l.href} target="_blank" rel="noreferrer">{l.label}</a>
               </li>

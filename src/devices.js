@@ -123,3 +123,25 @@ export const DEVICES = [
     image: withBase('/devices/tdisplay-p4.png'),
   },
 ]
+
+// camillia-chat-server's targets (its platformio.ini). `env` is both the build
+// and the release asset name, so it must match exactly. The serial-test env is
+// a bench build and is never released.
+export const CS_DEVICES = [
+  {
+    env: 'heltec-v4',
+    buy: { seller: 'Rokland', href: 'https://store.rokland.com/products/heltec-wifi-lora-32v4-esp32s3-sx1262-lora-node-meshtastic-lorawan' },
+    name: 'Heltec WiFi LoRa 32 V4',
+    chip: 'ESP32-S3',
+    desc: 'The bare board: SX1262 LoRa, 2 MB PSRAM, 16 MB flash. Status on the built-in 128×64 OLED.',
+    link: 'https://heltec.org/',
+  },
+  {
+    env: 'heltec-v4-expansion',
+    name: 'Heltec WiFi LoRa 32 V4 + TFT',
+    chip: 'ESP32-S3',
+    desc: 'The same board on the expansion kit. Health, message feed, and activity pages on the 320×240 touch TFT.',
+    link: 'https://heltec.org/',
+    image: withBase('/devices/heltec-v4-expansion-kit.png'),
+  },
+]
