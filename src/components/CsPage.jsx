@@ -26,7 +26,7 @@ function CsHero() {
           <p className="eyebrow">ESP32-S3 · LoRa mesh · Chat server</p>
           <h1>Catch up on what you missed</h1>
           <p className="lede">
-            Camillia Chat Server turns a Heltec V4 into an always-on listener
+            Camillia Chat Server turns a Heltec V4 or Wio Tracker L2 into an always-on listener
             for your Meshtastic channels. It keeps the recent history of each
             one, and when a Camillia-MT node comes back on air it sends that
             node whatever it missed — paced, so the catch-up never floods the
@@ -37,7 +37,7 @@ function CsHero() {
             <a className="btn btn-ghost" href={`https://github.com/${CS_FIRMWARE.repo}`}
                target="_blank" rel="noreferrer">View source on GitHub</a>
           </div>
-          <p className="hero-spec">2 builds · 10 channels · 250 messages each · LoRa + MQTT</p>
+          <p className="hero-spec">3 builds · 10 channels · 250 messages each · LoRa + MQTT</p>
         </div>
 
         <figure className="hero-screen">
@@ -127,8 +127,8 @@ export default function CsPage() {
       <CsFeatures />
       <Devices
         devices={CS_DEVICES}
-        title="One board, two builds"
-        intro="Both builds run on the Heltec WiFi LoRa 32 V4. The expansion kit takes over the pins the OLED uses, so it is a separate build rather than a setting. Pick yours in the flasher."
+        title="Two boards, three builds"
+        intro="Two builds run on the Heltec WiFi LoRa 32 V4: the expansion kit takes over the pins the OLED uses, so it is a separate build rather than a setting. The third is for the Seeed Wio Tracker L2. Pick yours in the flasher."
       />
       <Flasher product={CS_FIRMWARE} devices={CS_DEVICES} />
       <Docs steps={STEPS} title="Three steps to a server on the mesh" />

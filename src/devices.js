@@ -144,4 +144,11 @@ export const CS_DEVICES = [
     link: 'https://heltec.org/',
     image: withBase('/devices/heltec-v4-expansion-kit.png'),
   },
+  {
+    env: 'wio-tracker-l2',
+    name: 'Seeed Wio Tracker L2',
+    chip: 'ESP32-S3',
+    desc: 'SX1262 LoRa with a 320×240 touch panel. The same health, message feed, and activity pages; the Wake button also turns the page.',
+    image: withBase('/devices/wio-tracker-l2.svg'),
+  },
 ]
