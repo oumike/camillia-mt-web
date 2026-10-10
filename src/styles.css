@@ -20,13 +20,24 @@
   --font-display: 'Martian Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   --font-body: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Side gutters. viewport-fit=cover lets the page run under the notch and
+     home indicator of a landscape iPhone, so the gutter grows to clear them. */
+  --gutter: 24px;
+  --gutter-l: max(var(--gutter), env(safe-area-inset-left));
+  --gutter-r: max(var(--gutter), env(safe-area-inset-right));
 }
 
 /* --- Base ---------------------------------------------------------------- */
 
 *, *::before, *::after { box-sizing: border-box; }
 html, body, #root { margin: 0; padding: 0; min-height: 100%; }
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  /* iOS Safari otherwise inflates body text when the phone turns landscape. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
 
 body {
   font-family: var(--font-body);
@@ -133,7 +144,7 @@ p:last-child { margin-bottom: 0; }
 .container {
   max-width: var(--container);
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 var(--gutter-r) 0 var(--gutter-l);
 }
 
 section { padding: var(--section-gap) 0; }
@@ -250,7 +261,7 @@ section[id]:focus { outline: none; }
   height: var(--nav-h);
   max-width: var(--container);
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 var(--gutter-r) 0 var(--gutter-l);
 }
 
 .brand {
@@ -286,7 +297,7 @@ section[id]:focus { outline: none; }
   border-bottom: 0;
   color: var(--text-dim);
 }
-.nav-links a:hover { color: var(--text-main); background: var(--panel-alt); }
+@media (hover: hover) { .nav-links a:hover { color: var(--text-main); background: var(--panel-alt); } }
 .nav-links a b { color: var(--accent); font-weight: 600; }
 
 .nav-external { padding-left: 14px; border-left: 1px solid var(--divider); }
@@ -321,7 +332,11 @@ section[id]:focus { outline: none; }
     flex-direction: column;
     align-items: stretch;
     gap: 6px;
-    padding: 14px 24px 20px;
+    padding: 14px var(--gutter-r) 20px var(--gutter-l);
+    max-height: calc(100vh - var(--nav-h));
+    max-height: calc(100dvh - var(--nav-h));
+    overflow-y: auto;
+    overscroll-behavior: contain;
     background: var(--panel-bg);
     border-bottom: 1px solid var(--divider);
   }
@@ -337,6 +352,7 @@ section[id]:focus { outline: none; }
 }
 
 @media (max-width: 460px) {
+  :root { --gutter: 16px; }
   .brand span { font-size: 0.82rem; }
   /* Two full brands, the mode toggle and the burger do not fit a phone, so
      the page you are not on shrinks to its suffix and the mark goes. */
@@ -434,10 +450,22 @@ section[id]:focus { outline: none; }
 }
 .oled span:first-child { font-weight: 500; }
 
-@media (max-width: 880px) {
+/* Two columns hold down to an iPad in portrait and a phone on its side; on
+   those the stacked layout put a full-width capture under the copy, so the
+   screen filled a landscape phone on its own. */
+@media (max-width: 720px) {
   .hero-inner { grid-template-columns: 1fr; }
   .oled { font-size: clamp(0.72rem, 3.6vw, 1.05rem); }
-  .hero-screen { max-width: 460px; }
+  .hero-screen { width: 100%; max-width: 420px; justify-self: center; }
+}
+
+/* Short landscape screens: tighter hero so the copy and the screen both fit. */
+@media (max-height: 500px) and (orientation: landscape) {
+  .hero { padding-top: 28px; padding-bottom: 40px; }
+  .hero-actions { margin-top: 20px; }
+  .hero-spec { margin-top: 16px; }
+  .hero-screen img { max-height: calc(100dvh - var(--nav-h) - 96px); width: auto; margin: 0 auto; }
+  .hero-screen figcaption { margin-top: 14px; }
 }
 
 /* --- Features ------------------------------------------------------------ */
@@ -566,6 +594,7 @@ section[id]:focus { outline: none; }
   flex-direction: column;
   width: min(900px, 92vw);
   max-height: calc(100vh - 48px);
+  max-height: calc(100dvh - 48px);
   overflow: auto;
   padding: 14px;
   background: var(--panel-bg);
@@ -575,6 +604,8 @@ section[id]:focus { outline: none; }
 .shot-lightbox-panel img {
   width: 100%;
   height: auto;
+  max-height: calc(100dvh - 190px);
+  object-fit: contain;
   border-radius: 8px;
   border: 1px solid var(--divider-hi);
   image-rendering: pixelated;
@@ -643,7 +674,7 @@ section[id]:focus { outline: none; }
   text-align: left;
   transition: border-color .15s ease, background-color .15s ease;
 }
-.rail-item:hover { border-color: var(--divider-hi); }
+@media (hover: hover) { .rail-item:hover { border-color: var(--divider-hi); } }
 .rail-item[aria-pressed="true"] {
   border-color: var(--accent);
   background: var(--select-bg);
@@ -815,8 +846,9 @@ section[id]:focus { outline: none; }
 }
 
 .flasher-notes-modal-panel {
-  width: min(1100px, 80vw);
+  width: min(1100px, calc(100vw - 32px));
   max-height: 80vh;
+  max-height: 80dvh;
   display: flex;
   flex-direction: column;
   background: var(--panel-bg);
@@ -872,7 +904,7 @@ section[id]:focus { outline: none; }
   line-height: 1.55;
   color: var(--text-dim);
   white-space: pre-wrap;
-  max-height: calc(80vh - 96px);
+  max-height: calc(80dvh - 96px);
   overflow: auto;
   padding: 6px 0 2px;
   border-top: 1px solid var(--divider);

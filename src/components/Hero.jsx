@@ -1,4 +1,5 @@
 import { withBase } from '../basePath'
+import { CAN_FLASH } from '../platform.js'
 
 export default function Hero() {
   return (
@@ -14,8 +15,8 @@ export default function Hero() {
             a keyboard, a roller wheel, a trackball, or a touchscreen.
           </p>
           <div className="hero-actions">
-            <a className="btn" href="#flash">Flash from your browser</a>
-            <a className="btn btn-ghost" href="https://github.com/oumike/camillia-mt"
+            {CAN_FLASH && <a className="btn" href="#flash">Flash from your browser</a>}
+            <a className={CAN_FLASH ? 'btn btn-ghost' : 'btn'} href="https://github.com/oumike/camillia-mt"
                target="_blank" rel="noreferrer">View source on GitHub</a>
           </div>
           <p className="hero-spec">12 boards · 10 channels · 13 palettes · 22 languages</p>

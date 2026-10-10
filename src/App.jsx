@@ -13,6 +13,7 @@ import AI from './components/AI.jsx'
 import CsPage from './components/CsPage.jsx'
 import { DEVICES } from './devices.js'
 import { MT_FIRMWARE } from './firmware.js'
+import { CAN_FLASH } from './platform.js'
 
 const STORAGE_KEY = 'camillia-theme'
 
@@ -76,7 +77,9 @@ export default function App() {
           <Devices
             devices={DEVICES}
             title="Twelve boards, one firmware"
-            intro="Every profile below is built from the same source tree. Pick your board in the flasher and it writes the matching build."
+            intro={CAN_FLASH
+              ? 'Every profile below is built from the same source tree. Pick your board in the flasher and it writes the matching build.'
+              : 'Every profile below is built from the same source tree. Open this page on a desktop browser to flash one.'}
           />
           <Screenshots />
           <ThemeRail
@@ -86,7 +89,7 @@ export default function App() {
             onModeChange={setMode}
             onThemeChange={setTheme}
           />
-          <Flasher product={MT_FIRMWARE} devices={DEVICES} debugReport />
+          {CAN_FLASH && <Flasher product={MT_FIRMWARE} devices={DEVICES} debugReport />}
           <Docs />
           <AI />
         </main>

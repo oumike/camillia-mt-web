@@ -3,6 +3,7 @@ import Flasher from './Flasher.jsx'
 import Docs from './Docs.jsx'
 import { CS_DEVICES } from '../devices.js'
 import { CS_FIRMWARE } from '../firmware.js'
+import { CAN_FLASH } from '../platform.js'
 
 // The camillia chat server's page. Facts here come from camillia-chat-server's
 // design doc (docs/superpowers/specs) and its platformio.ini; keep them in step
@@ -33,8 +34,8 @@ function CsHero() {
             mesh.
           </p>
           <div className="hero-actions">
-            <a className="btn" href="#flash">Flash from your browser</a>
-            <a className="btn btn-ghost" href={`https://github.com/${CS_FIRMWARE.repo}`}
+            {CAN_FLASH && <a className="btn" href="#flash">Flash from your browser</a>}
+            <a className={CAN_FLASH ? 'btn btn-ghost' : 'btn'} href={`https://github.com/${CS_FIRMWARE.repo}`}
                target="_blank" rel="noreferrer">View source on GitHub</a>
           </div>
           <p className="hero-spec">3 builds · 10 channels · 250 messages each · LoRa + MQTT</p>
@@ -128,9 +129,9 @@ export default function CsPage() {
       <Devices
         devices={CS_DEVICES}
         title="Two boards, three builds"
-        intro="Two builds run on the Heltec WiFi LoRa 32 V4: the expansion kit takes over the pins the OLED uses, so it is a separate build rather than a setting. The third is for the Seeed Wio Tracker L2. Pick yours in the flasher."
+        intro={`Two builds run on the Heltec WiFi LoRa 32 V4: the expansion kit takes over the pins the OLED uses, so it is a separate build rather than a setting. The third is for the Seeed Wio Tracker L2.${CAN_FLASH ? ' Pick yours in the flasher.' : ''}`}
       />
-      <Flasher product={CS_FIRMWARE} devices={CS_DEVICES} />
+      {CAN_FLASH && <Flasher product={CS_FIRMWARE} devices={CS_DEVICES} />}
       <Docs steps={STEPS} title="Three steps to a server on the mesh" />
     </>
   )

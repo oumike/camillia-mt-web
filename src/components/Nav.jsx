@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { withBase } from '../basePath'
 import ModeToggle from './ModeToggle.jsx'
+import { CAN_FLASH } from '../platform.js'
 
 // The device navigates by single keypress, so the site does too. `key` is both
 // the shortcut and the bracketed letter shown in the link, exactly like the
@@ -16,6 +17,13 @@ const SECTIONS = {
     { key: 'd', label: 'evices',     href: '#devices' },
     { key: 'f', label: 'lash',       href: '#flash' },
   ],
+}
+
+// No flasher on iOS (see platform.js), so no shortcut to it either.
+if (!CAN_FLASH) {
+  for (const page of Object.keys(SECTIONS)) {
+    SECTIONS[page] = SECTIONS[page].filter(l => l.href !== '#flash')
+  }
 }
 
 const REPOS = {
