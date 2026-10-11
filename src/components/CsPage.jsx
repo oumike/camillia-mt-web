@@ -24,10 +24,10 @@ function CsHero() {
     <section id="top" className="hero">
       <div className="container hero-inner">
         <div className="hero-copy">
-          <p className="eyebrow">ESP32-S3 · LoRa mesh · Chat server</p>
+          <p className="eyebrow">ESP32-S3 / P4 · LoRa mesh · Chat server</p>
           <h1>Catch up on what you missed</h1>
           <p className="lede">
-            Camillia Chat Server turns a Heltec V4, V4-R8 or Wio Tracker L2 into an always-on listener
+            Camillia Chat Server turns almost any board Camillia-MT runs on into an always-on listener
             for your Meshtastic channels. It keeps the recent history of each
             one, and when a Camillia-MT node comes back on air it sends that
             node whatever it missed — paced, so the catch-up never floods the
@@ -38,7 +38,7 @@ function CsHero() {
             <a className={CAN_FLASH ? 'btn btn-ghost' : 'btn'} href={`https://github.com/${CS_FIRMWARE.repo}`}
                target="_blank" rel="noreferrer">View source on GitHub</a>
           </div>
-          <p className="hero-spec">3 builds · 10 channels · 250 messages each · LoRa + MQTT</p>
+          <p className="hero-spec">13 builds · 10 channels · 250 messages each · LoRa + MQTT</p>
         </div>
 
         <figure className="hero-screen">
@@ -128,8 +128,8 @@ export default function CsPage() {
       <CsFeatures />
       <Devices
         devices={CS_DEVICES}
-        title="Three boards, four builds"
-        intro={`Two builds run on the Heltec WiFi LoRa 32 V4: the expansion kit takes over the pins the OLED uses, so it is a separate build rather than a setting. The V4-R8 on Expansion Kit V2 moves most of those pins again, so it gets its own. The fourth is for the Seeed Wio Tracker L2.${CAN_FLASH ? ' Pick yours in the flasher.' : ''}`}
+        title="Every Camillia-MT board but the Cardputer"
+        intro={`Every board Camillia-MT supports can run the server except the Cardputer, which has no PSRAM for the message store. The Heltec V4 gets two builds: the expansion kit takes over the pins the OLED uses, so it is a separate build rather than a setting. Screens of 320×240 and larger show the same health, message feed and activity pages, scaled up; the T-Deck Pro's e-paper shows a plain status page.${CAN_FLASH ? ' Pick yours in the flasher.' : ''}`}
       />
       {CAN_FLASH && <Flasher product={CS_FIRMWARE} devices={CS_DEVICES} />}
       <Docs steps={STEPS} title="Three steps to a server on the mesh" />

@@ -124,6 +124,13 @@ export const DEVICES = [
   },
 ]
 
+// Photo, product link and seller of a camillia-mt target, for chat-server
+// entries that run on the same hardware.
+function mtInfo(env) {
+  const { buy, link, image } = DEVICES.find((d) => d.env === env)
+  return { buy, link, image }
+}
+
 // camillia-chat-server's targets (its platformio.ini). `env` is both the build
 // and the release asset name, so it must match exactly. The serial-test env is
 // a bench build and is never released.
@@ -161,5 +168,72 @@ export const CS_DEVICES = [
     chip: 'ESP32-S3',
     desc: 'SX1262 LoRa with a 320×240 touch panel. The same health, message feed, and activity pages; the Wake button also turns the page.',
     image: withBase('/devices/wio-tracker-l2.svg'),
+  },
+  // The rest share hardware (and so photos, links and sellers) with
+  // camillia-mt's targets above. All are untested on hardware except the
+  // Mesh Deck.
+  {
+    ...mtInfo('tdeck'),
+    env: 'tdeck',
+    name: 'LilyGo T-Deck',
+    chip: 'ESP32-S3',
+    desc: 'SX1262 LoRa. Health, message feed, and activity pages on the 320×240 touch display.',
+  },
+  {
+    ...mtInfo('tdeck-pro'),
+    env: 'tdeck-pro',
+    name: 'LilyGo T-Deck Pro',
+    chip: 'ESP32-S3',
+    desc: 'SX1262 LoRa. A plain status page on the e-paper, redrawn at most once a minute.',
+  },
+  {
+    ...mtInfo('tlora-pager-tft'),
+    env: 'tlora-pager-tft',
+    name: 'LilyGo T-Lora Pager TFT',
+    chip: 'ESP32-S3',
+    desc: 'SX1262 LoRa. The status pages on the 480×222 TFT; the roller wheel’s button turns the page.',
+  },
+  {
+    ...mtInfo('mesh-deck'),
+    env: 'mesh-deck',
+    name: 'Attaky Mesh Deck',
+    chip: 'ESP32-S3',
+    desc: 'SX1262 LoRa. Health, message feed, and activity pages on the 320×240 touch display.',
+  },
+  {
+    ...mtInfo('m9'),
+    env: 'm9',
+    name: 'Elecrow ThinkNode M9',
+    chip: 'ESP32-S3',
+    desc: 'LR1110 LoRa. Health, message feed, and activity pages on the 2.4″ 320×240 display.',
+  },
+  {
+    ...mtInfo('crowpanel-35'),
+    env: 'crowpanel-35',
+    name: 'Elecrow CrowPanel Advance 3.5',
+    chip: 'ESP32-S3',
+    desc: 'SX1262 LoRa module. Larger status pages on the 3.5″ 480×320 touch panel.',
+  },
+  {
+    // No 5.0″ photo or listing yet, so it borrows the 3.5″ artwork.
+    image: withBase('/devices/crowpanel-35.jpg'),
+    env: 'crowpanel-50',
+    name: 'Elecrow CrowPanel Advance 5.0',
+    chip: 'ESP32-S3',
+    desc: 'SX1262 LoRa module. Three columns of channels on the 5″ 800×480 touch panel.',
+  },
+  {
+    ...mtInfo('p4-amoled-sx1262'),
+    env: 'p4-amoled-sx1262',
+    name: 'LilyGo T-Display P4 AMOLED + SX1262',
+    chip: 'ESP32-P4',
+    desc: 'SX1262 LoRa. The status pages on the 4.1″ AMOLED touch screen; WiFi through its ESP32-C6.',
+  },
+  {
+    ...mtInfo('p4-amoled-lr2021'),
+    env: 'p4-amoled-lr2021',
+    name: 'LilyGo T-Display P4 AMOLED + LR2021',
+    chip: 'ESP32-P4',
+    desc: 'LR2021 LoRa. The status pages on the 4.1″ AMOLED touch screen; WiFi through its ESP32-C6.',
   },
 ]
