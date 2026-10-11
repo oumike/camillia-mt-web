@@ -145,6 +145,17 @@ export const CS_DEVICES = [
     image: withBase('/devices/heltec-v4-expansion-kit.png'),
   },
   {
+    // Untested on hardware: pins come from camillia-mt's hw_heltec_r8.h. No
+    // V4-R8 photo yet, so it borrows the V4 expansion-kit shot.
+    env: 'heltec-v4-r8',
+    buy: { seller: 'Heltec', href: 'https://heltec.org/project/v4-r8-ex/' },
+    name: 'Heltec WiFi LoRa 32 V4-R8 + TFT',
+    chip: 'ESP32-S3',
+    desc: 'The V4-R8 (8 MB PSRAM) on the Expansion Kit V2. The same health, message feed, and activity pages on the 320×240 touch TFT.',
+    link: 'https://heltec.org/project/v4-r8-ex/',
+    image: withBase('/devices/heltec-v4-expansion-kit.png'),
+  },
+  {
     env: 'wio-tracker-l2',
     name: 'Seeed Wio Tracker L2',
     chip: 'ESP32-S3',

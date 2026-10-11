@@ -27,7 +27,7 @@ function CsHero() {
           <p className="eyebrow">ESP32-S3 · LoRa mesh · Chat server</p>
           <h1>Catch up on what you missed</h1>
           <p className="lede">
-            Camillia Chat Server turns a Heltec V4 or Wio Tracker L2 into an always-on listener
+            Camillia Chat Server turns a Heltec V4, V4-R8 or Wio Tracker L2 into an always-on listener
             for your Meshtastic channels. It keeps the recent history of each
             one, and when a Camillia-MT node comes back on air it sends that
             node whatever it missed — paced, so the catch-up never floods the
@@ -128,8 +128,8 @@ export default function CsPage() {
       <CsFeatures />
       <Devices
         devices={CS_DEVICES}
-        title="Two boards, three builds"
-        intro={`Two builds run on the Heltec WiFi LoRa 32 V4: the expansion kit takes over the pins the OLED uses, so it is a separate build rather than a setting. The third is for the Seeed Wio Tracker L2.${CAN_FLASH ? ' Pick yours in the flasher.' : ''}`}
+        title="Three boards, four builds"
+        intro={`Two builds run on the Heltec WiFi LoRa 32 V4: the expansion kit takes over the pins the OLED uses, so it is a separate build rather than a setting. The V4-R8 on Expansion Kit V2 moves most of those pins again, so it gets its own. The fourth is for the Seeed Wio Tracker L2.${CAN_FLASH ? ' Pick yours in the flasher.' : ''}`}
       />
       {CAN_FLASH && <Flasher product={CS_FIRMWARE} devices={CS_DEVICES} />}
       <Docs steps={STEPS} title="Three steps to a server on the mesh" />
