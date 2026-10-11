@@ -141,7 +141,8 @@ export const CS_DEVICES = [
     name: 'Heltec WiFi LoRa 32 V4',
     chip: 'ESP32-S3',
     desc: 'The bare board: SX1262 LoRa, 2 MB PSRAM, 16 MB flash. Status on the built-in 128×64 OLED.',
-    link: 'https://heltec.org/',
+    link: 'https://heltec.org/project/wifi-lora-32-v4/',
+    image: withBase('/devices/heltec-v4.png'),
   },
   {
     env: 'heltec-v4-expansion',
