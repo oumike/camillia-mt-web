@@ -84,15 +84,14 @@ export const DEVICES = [
   },
   {
     // Shipped under the codename `square` while the hardware was unreleased;
-    // Seeed sells it as the Wio Tracker L2. Still missing a product photo and a
-    // manufacturer link, so the artwork stays the question-mark placeholder and
-    // `link`/`buy` are omitted — Devices.jsx renders each field only when
-    // present. Drop in a photo and the vendor URL when they are available.
+    // Seeed sells it as the Wio Tracker L2 Pro.
     env: 'wio-tracker-l2',
+    buy: { seller: 'Seeed Studio', href: 'https://www.seeedstudio.com/Wio-Tracker-L2-Pro-for-Meshtastic-p-0000.html' },
     name: 'Seeed Wio Tracker L2',
+    link: 'https://www.seeedstudio.com/Wio-Tracker-L2-Pro-for-Meshtastic-p-0000.html',
     chip: 'ESP32-S3',
     desc: 'SX1262 LoRa, 320×240 touch panel, GNSS, audio, microSD.',
-    image: withBase('/devices/wio-tracker-l2.svg'),
+    image: withBase('/devices/wio-tracker-l2.jpg'),
   },
   {
     // Sold by Muzi Works as a Meshtastic bundle with the SX1262 module in the
@@ -177,11 +176,11 @@ export const CS_DEVICES = [
     image: withBase('/devices/heltec-v4-expansion-kit.png'),
   },
   {
+    ...mtInfo('wio-tracker-l2'),
     env: 'wio-tracker-l2',
     name: 'Seeed Wio Tracker L2',
     chip: 'ESP32-S3',
     desc: 'SX1262 LoRa with a 320×240 touch panel. The same health, message feed, and activity pages; the Wake button also turns the page.',
-    image: withBase('/devices/wio-tracker-l2.svg'),
   },
   // The rest share hardware (and so photos, links and sellers) with
   // camillia-mt's targets above. All are untested on hardware except the
