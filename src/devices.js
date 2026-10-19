@@ -106,9 +106,10 @@ export const DEVICES = [
   },
   {
     // Not just a bigger 3.5″: an 800×480 RGB panel, different module-slot pins,
-    // and a function DIP switch that hands the slot's GPIOs to either the radio
-    // or the SD card, never both. The release build is for the V1.2/V1.3 boards
-    // Elecrow sells now. See src/hal/hw_crowpanel_50.h in the firmware tree.
+    // and a function DIP switch that hands the slot's GPIOs to the radio, the
+    // SD card, or the speaker/mic, one at a time. The release build is for the
+    // V1.2/V1.3 boards Elecrow sells now. See src/hal/hw_crowpanel_50.h in the
+    // firmware tree.
     //
     // There's no Meshtastic edition of the 5.0 (Elecrow's page says so); the
     // radio is the SX1262 (LoRa) add-on module offered on the same listing.
