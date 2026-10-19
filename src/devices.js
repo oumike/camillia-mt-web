@@ -106,6 +106,19 @@ export const DEVICES = [
     image: withBase('/devices/crowpanel-35.jpg'),
   },
   {
+    // Not just a bigger 3.5″: an 800×480 RGB panel, different module-slot pins,
+    // and a function DIP switch that hands the slot's GPIOs to either the radio
+    // or the SD card, never both. The release build is for the V1.2/V1.3 boards
+    // Elecrow sells now. See src/hal/hw_crowpanel_50.h in the firmware tree.
+    //
+    // No 5.0″ photo or listing yet, so it borrows the 3.5″ artwork.
+    env: 'crowpanel-50',
+    name: 'Elecrow CrowPanel Advance 5.0',
+    chip: 'ESP32-S3',
+    desc: 'SX1262 LoRa module, 5″ 800×480 IPS touch panel. Landscape or portrait. For V1.2/V1.3 boards, with the function DIP switch set to the wireless module.',
+    image: withBase('/devices/crowpanel-35.jpg'),
+  },
+  {
     env: 'p4-amoled-sx1262',
     buy: { seller: 'Rokland', href: 'https://store.rokland.com/products/lilygo-t-display-p4' },
     name: 'LilyGo T-Display P4 AMOLED + SX1262',
@@ -216,8 +229,7 @@ export const CS_DEVICES = [
     desc: 'SX1262 LoRa module. Larger status pages on the 3.5″ 480×320 touch panel.',
   },
   {
-    // No 5.0″ photo or listing yet, so it borrows the 3.5″ artwork.
-    image: withBase('/devices/crowpanel-35.jpg'),
+    ...mtInfo('crowpanel-50'),
     env: 'crowpanel-50',
     name: 'Elecrow CrowPanel Advance 5.0',
     chip: 'ESP32-S3',

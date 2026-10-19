@@ -32,6 +32,7 @@ const ASSET_SLUG = {
   'm9': 'm9',
   'wio-tracker-l2': 'wio-tracker-l2',
   'crowpanel-35': 'crowpanel-35',
+  'crowpanel-50': 'crowpanel-50',
   'p4-amoled-sx1262': 'p4-amoled-sx1262',
   'p4-amoled-lr2021': 'p4-amoled-lr2021',
 }
