@@ -110,12 +110,15 @@ export const DEVICES = [
     // or the SD card, never both. The release build is for the V1.2/V1.3 boards
     // Elecrow sells now. See src/hal/hw_crowpanel_50.h in the firmware tree.
     //
-    // No 5.0″ photo or listing yet, so it borrows the 3.5″ artwork.
+    // There's no Meshtastic edition of the 5.0 (Elecrow's page says so); the
+    // radio is the SX1262 (LoRa) add-on module offered on the same listing.
     env: 'crowpanel-50',
+    buy: { seller: 'Elecrow', href: 'https://www.elecrow.com/crowpanel-advance-5-0-hmi-esp32-ai-display-800x480-ips-artificial-intelligent-touch-screen.html' },
     name: 'Elecrow CrowPanel Advance 5.0',
+    link: 'https://www.elecrow.com/crowpanel-advance-5-0-hmi-esp32-ai-display-800x480-ips-artificial-intelligent-touch-screen.html',
     chip: 'ESP32-S3',
-    desc: 'SX1262 LoRa module, 5″ 800×480 IPS touch panel. Landscape or portrait. For V1.2/V1.3 boards, with the function DIP switch set to the wireless module.',
-    image: withBase('/devices/crowpanel-35.jpg'),
+    desc: 'SX1262 LoRa add-on module, 5″ 800×480 IPS touch panel. Landscape or portrait. For V1.2/V1.3 boards, with the function DIP switch set to the wireless module.',
+    image: withBase('/devices/crowpanel-50.jpg'),
   },
   {
     env: 'p4-amoled-sx1262',
