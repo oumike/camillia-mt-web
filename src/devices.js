@@ -84,15 +84,14 @@ export const DEVICES = [
   },
   {
     // Shipped under the codename `square` while the hardware was unreleased;
-    // Seeed sells it as the Wio Tracker L2. Still missing a product photo and a
-    // manufacturer link, so the artwork stays the question-mark placeholder and
-    // `link`/`buy` are omitted — Devices.jsx renders each field only when
-    // present. Drop in a photo and the vendor URL when they are available.
+    // Seeed sells it as the Wio Tracker L2 Pro.
     env: 'wio-tracker-l2',
+    buy: { seller: 'Seeed Studio', href: 'https://www.seeedstudio.com/Wio-Tracker-L2-Pro-for-Meshtastic-p-0000.html' },
     name: 'Seeed Wio Tracker L2',
+    link: 'https://www.seeedstudio.com/Wio-Tracker-L2-Pro-for-Meshtastic-p-0000.html',
     chip: 'ESP32-S3',
     desc: 'SX1262 LoRa, 320×240 touch panel, GNSS, audio, microSD.',
-    image: withBase('/devices/wio-tracker-l2.svg'),
+    image: withBase('/devices/wio-tracker-l2.jpg'),
   },
   {
     // Sold by Muzi Works as a Meshtastic bundle with the SX1262 module in the
@@ -104,6 +103,23 @@ export const DEVICES = [
     chip: 'ESP32-S3',
     desc: 'SX1262 LoRa module, 3.5″ 480×320 IPS touch panel, optional UART GPS. Landscape or portrait.',
     image: withBase('/devices/crowpanel-35.jpg'),
+  },
+  {
+    // Not just a bigger 3.5″: an 800×480 RGB panel, different module-slot pins,
+    // and a function DIP switch that hands the slot's GPIOs to the radio, the
+    // SD card, or the speaker/mic, one at a time. The release build is for the
+    // V1.2/V1.3 boards Elecrow sells now. See src/hal/hw_crowpanel_50.h in the
+    // firmware tree.
+    //
+    // There's no Meshtastic edition of the 5.0 (Elecrow's page says so); the
+    // radio is the SX1262 (LoRa) add-on module offered on the same listing.
+    env: 'crowpanel-50',
+    buy: { seller: 'Elecrow', href: 'https://www.elecrow.com/crowpanel-advance-5-0-hmi-esp32-ai-display-800x480-ips-artificial-intelligent-touch-screen.html' },
+    name: 'Elecrow CrowPanel Advance 5.0',
+    link: 'https://www.elecrow.com/crowpanel-advance-5-0-hmi-esp32-ai-display-800x480-ips-artificial-intelligent-touch-screen.html',
+    chip: 'ESP32-S3',
+    desc: 'SX1262 LoRa add-on module, 5″ 800×480 IPS touch panel. Landscape or portrait. For V1.2/V1.3 boards, with the function DIP switch set to the wireless module.',
+    image: withBase('/devices/crowpanel-50.jpg'),
   },
   {
     env: 'p4-amoled-sx1262',
@@ -164,11 +180,11 @@ export const CS_DEVICES = [
     image: withBase('/devices/heltec-v4-expansion-kit.png'),
   },
   {
+    ...mtInfo('wio-tracker-l2'),
     env: 'wio-tracker-l2',
     name: 'Seeed Wio Tracker L2',
     chip: 'ESP32-S3',
     desc: 'SX1262 LoRa with a 320×240 touch panel. The same health, message feed, and activity pages; the Wake button also turns the page.',
-    image: withBase('/devices/wio-tracker-l2.svg'),
   },
   // The rest share hardware (and so photos, links and sellers) with
   // camillia-mt's targets above. All are untested on hardware except the
@@ -216,8 +232,7 @@ export const CS_DEVICES = [
     desc: 'SX1262 LoRa module. Larger status pages on the 3.5″ 480×320 touch panel.',
   },
   {
-    // No 5.0″ photo or listing yet, so it borrows the 3.5″ artwork.
-    image: withBase('/devices/crowpanel-35.jpg'),
+    ...mtInfo('crowpanel-50'),
     env: 'crowpanel-50',
     name: 'Elecrow CrowPanel Advance 5.0',
     chip: 'ESP32-S3',

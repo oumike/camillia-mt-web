@@ -76,7 +76,7 @@ export default function App() {
           <Features />
           <Devices
             devices={DEVICES}
-            title="Twelve boards, one firmware"
+            title="Thirteen boards, one firmware"
             intro={CAN_FLASH
               ? 'Every profile below is built from the same source tree. Pick your board in the flasher and it writes the matching build.'
               : 'Every profile below is built from the same source tree. Open this page on a desktop browser to flash one.'}
