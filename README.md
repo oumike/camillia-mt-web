@@ -129,13 +129,33 @@ optional pasting.
 
 ### Customize
 
-**Customize** pre-configures an install; for now it sets the radio preset.
+**Customize** pre-configures an install. It can set:
+
+- the radio preset;
+- a boot logo, shown on the splash card instead of the Camillia title;
+- the channel list, which replaces every channel on the device. Each channel
+  has a name, a key, position sharing, and MQTT uplink and downlink.
+
+**Start from** fills these in from a community setup: ChiMesh (Chicagoland) or
+MichMesh (Michigan). Each profile lists the settings it recommends that the
+flasher cannot set yet, such as MQTT servers and the hop limit.
+
 Choices are kept in `localStorage`, and when a flash finishes the dialog offers
 to apply them. Applying opens a 115200-baud Web Serial session and speaks
-camillia-mt's `cfg` CLI (`cfg caps`, `cfg set preset <name>`, `cfg commit`); see
-[`src/customize.js`](src/customize.js). On a fresh install the device holds the
-settings until on-device setup completes; on an existing install it saves them
-and reboots. Firmware without the `cfg` commands is detected and reported.
+camillia-mt's `cfg` CLI; see [`src/customize.js`](src/customize.js):
+
+- `cfg caps` reports what the device supports, its channel slots and the size of
+  its logo area.
+- Changes are staged with `cfg set preset`, `cfg channels clear` + `cfg set
+  channel`, and `cfg logo begin`/`data`/`end`. The logo is sent as hex chunks
+  with a CRC-32 check.
+- `cfg commit` writes everything at once.
+
+The logo is resized to the device's logo area, drawn over the card colour and
+shrunk until it fits the 8 KB limit in NVS. On a fresh install the device holds
+the settings until on-device setup completes; on an existing install it saves
+them and reboots. Firmware without the `cfg` commands, or without a feature, is
+detected and reported.
 
 ## Updating the firmware version
 
