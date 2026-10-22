@@ -137,7 +137,7 @@ export default function Customize({ supported, canFlash = false, onFlash, flashC
     setAfterFlash(fromFlash)
     setPhase('idle')
     setStatus(fromFlash
-      ? 'Firmware installed. Apply your customizations once the device has rebooted.'
+      ? 'Firmware installed. Once the device has rebooted, click Apply to device and pick its port again.'
       : '')
     setOpen(true)
   }

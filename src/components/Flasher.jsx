@@ -40,8 +40,14 @@ export default function Flasher({ product, devices, debugReport = false, customi
   // esp-web-tools appends its install dialog to <body> and fires `closed` when
   // it goes. Only an install started by Flash and Customize, once finished,
   // goes on to the apply step; a plain Flash never does.
+  //
+  // Camillia has no Improv, so after "Installation complete!" esp-web-tools'
+  // Next leads back to its dashboard, whose first option is Install again. For
+  // a Flash and Customize install the dialog is closed for the user once the
+  // completion screen has shown, so the next thing they see is the apply step.
   useEffect(() => {
     if (!customize || typeof MutationObserver === 'undefined') return undefined
+    const timers = new Set()
     const observer = new MutationObserver(records => {
       for (const record of records) {
         for (const node of record.addedNodes) {
@@ -49,14 +55,34 @@ export default function Flasher({ product, devices, debugReport = false, customi
           const forCustomize = customizeFlashRef.current
           customizeFlashRef.current = false
           if (!forCustomize) continue
+          let closeTimer = null
+          const poll = setInterval(() => {
+            // `_client` is undefined while esp-web-tools is still probing the
+            // new firmware; the completion screen shows once that settles.
+            if (closeTimer || node._installState?.state !== 'finished' || node._client === undefined) return
+            closeTimer = setTimeout(() => {
+              if (node.isConnected && node._installState?.state === 'finished') {
+                node.shadowRoot?.querySelector('ew-dialog')?.close()
+              }
+            }, 1500)
+            timers.add(closeTimer)
+          }, 250)
+          timers.add(poll)
           node.addEventListener('closed', () => {
+            clearInterval(poll)
+            clearTimeout(closeTimer)
+            timers.delete(poll)
+            timers.delete(closeTimer)
             if (node._installState?.state === 'finished') setFlashCount(n => n + 1)
           }, { once: true })
         }
       }
     })
     observer.observe(document.body, { childList: true })
-    return () => observer.disconnect()
+    return () => {
+      observer.disconnect()
+      for (const timer of timers) { clearInterval(timer); clearTimeout(timer) }
+    }
   }, [customize])
 
   // Runs inside the Continue click, so the port prompt still has the user
