@@ -8,6 +8,7 @@ import {
   releaseUrl,
 } from '../firmware.js'
 import DebugReport from './DebugReport.jsx'
+import Customize from './Customize.jsx'
 
 function serialSupported() {
   return typeof navigator !== 'undefined' && 'serial' in navigator
@@ -17,8 +18,9 @@ const FOCUSABLE = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1
 
 // `product` is MT_FIRMWARE or CS_FIRMWARE from firmware.js; `devices` is that
 // firmware's board list. Debug & report speaks camillia-mt's serial health
-// commands, so it is only offered where the firmware answers them.
-export default function Flasher({ product, devices, debugReport = false }) {
+// commands, and Customize its `cfg` commands, so both are only offered where
+// the firmware answers them.
+export default function Flasher({ product, devices, debugReport = false, customize = false }) {
   const [supported, setSupported] = useState(true)
   const [env, setEnv] = useState(devices[0].env)
   const [catalog, setCatalog] = useState(null)
@@ -26,11 +28,30 @@ export default function Flasher({ product, devices, debugReport = false }) {
   const [showNotes, setShowNotes] = useState(false)
   const [versionStale, setVersionStale] = useState(false)
   const [imageFailed, setImageFailed] = useState(false)
+  const [flashCount, setFlashCount] = useState(0)
   const notesPanelRef = useRef(null)
   const notesCloseRef = useRef(null)
   const notesReturnRef = useRef(null)
 
   useEffect(() => setSupported(serialSupported()), [])
+
+  // esp-web-tools appends its install dialog to <body> and fires `closed` when
+  // it goes; a finished install is what Customize offers to follow up on.
+  useEffect(() => {
+    if (!customize || typeof MutationObserver === 'undefined') return undefined
+    const observer = new MutationObserver(records => {
+      for (const record of records) {
+        for (const node of record.addedNodes) {
+          if (node.nodeName !== 'EWT-INSTALL-DIALOG') continue
+          node.addEventListener('closed', () => {
+            if (node._installState?.state === 'finished') setFlashCount(n => n + 1)
+          }, { once: true })
+        }
+      }
+    })
+    observer.observe(document.body, { childList: true })
+    return () => observer.disconnect()
+  }, [customize])
 
   useEffect(() => {
     let cancelled = false
@@ -231,6 +252,9 @@ export default function Flasher({ product, devices, debugReport = false }) {
                   version={version}
                   supported={supported}
                 />
+              )}
+              {customize && (
+                <Customize supported={supported} flashCount={flashCount} />
               )}
             </div>
             {versionStale ? (

@@ -1062,6 +1062,10 @@ section[id]:focus { outline: none; }
   padding: 0 14px;
 }
 
+.customize-panel { width: min(560px, calc(100vw - 40px)); }
+.customize-field { max-width: none; }
+.customize-note { margin-top: -6px; }
+
 .flasher-actions {
   display: flex;
   gap: 10px;

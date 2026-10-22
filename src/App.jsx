@@ -89,7 +89,7 @@ export default function App() {
             onModeChange={setMode}
             onThemeChange={setTheme}
           />
-          {CAN_FLASH && <Flasher product={MT_FIRMWARE} devices={DEVICES} debugReport />}
+          {CAN_FLASH && <Flasher product={MT_FIRMWARE} devices={DEVICES} debugReport customize />}
           <Docs />
           <AI />
         </main>

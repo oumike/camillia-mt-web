@@ -127,6 +127,16 @@ page. If the serial output is too large for a reliable issue URL, the prefilled
 issue contains a compact excerpt and the full sanitized report is copied for
 optional pasting.
 
+### Customize
+
+**Customize** pre-configures an install; for now it sets the radio preset.
+Choices are kept in `localStorage`, and when a flash finishes the dialog offers
+to apply them. Applying opens a 115200-baud Web Serial session and speaks
+camillia-mt's `cfg` CLI (`cfg caps`, `cfg set preset <name>`, `cfg commit`); see
+[`src/customize.js`](src/customize.js). On a fresh install the device holds the
+settings until on-device setup completes; on an existing install it saves them
+and reboots. Firmware without the `cfg` commands is detected and reported.
+
 ## Updating the firmware version
 
 `FIRMWARE_VERSION` in [`src/firmware.js`](src/firmware.js) is **not** where the
