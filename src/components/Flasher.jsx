@@ -28,7 +28,7 @@ export default function Flasher({ product, devices, debugReport = false, customi
   const [showNotes, setShowNotes] = useState(false)
   const [versionStale, setVersionStale] = useState(false)
   const [imageFailed, setImageFailed] = useState(false)
-  const [flashCount, setFlashCount] = useState(0)
+  const [flashed, setFlashed] = useState(null)
   const notesPanelRef = useRef(null)
   const notesCloseRef = useRef(null)
   const notesReturnRef = useRef(null)
@@ -39,12 +39,13 @@ export default function Flasher({ product, devices, debugReport = false, customi
 
   // esp-web-tools appends its install dialog to <body> and fires `closed` when
   // it goes. Only an install started by Flash and Customize, once finished,
-  // goes on to the apply step; a plain Flash never does.
+  // goes on to apply the settings, over the port the installer already had (so
+  // there is no second port prompt); a plain Flash never does.
   //
   // Camillia has no Improv, so after "Installation complete!" esp-web-tools'
   // Next leads back to its dashboard, whose first option is Install again. For
   // a Flash and Customize install the dialog is closed for the user once the
-  // completion screen has shown, so the next thing they see is the apply step.
+  // completion screen has shown.
   useEffect(() => {
     if (!customize || typeof MutationObserver === 'undefined') return undefined
     const timers = new Set()
@@ -73,7 +74,9 @@ export default function Flasher({ product, devices, debugReport = false, customi
             clearTimeout(closeTimer)
             timers.delete(poll)
             timers.delete(closeTimer)
-            if (node._installState?.state === 'finished') setFlashCount(n => n + 1)
+            if (node._installState?.state === 'finished') {
+              setFlashed(prev => ({ id: (prev?.id ?? 0) + 1, port: node.port ?? null }))
+            }
           }, { once: true })
         }
       }
@@ -301,7 +304,7 @@ export default function Flasher({ product, devices, debugReport = false, customi
                   supported={supported}
                   canFlash={Boolean(manifestUrl)}
                   onFlash={flashForCustomize}
-                  flashCount={flashCount}
+                  flashed={flashed}
                 />
               )}
               {debugReport && (

@@ -1063,6 +1063,8 @@ section[id]:focus { outline: none; }
 }
 
 .customize-panel { width: min(680px, calc(100vw - 40px)); }
+.customize-inline-status { flex-basis: 100%; order: 10; }
+.customize-inline-actions { display: flex; gap: 10px; align-items: center; }
 .customize-field { max-width: none; }
 .customize-note { margin-top: -6px; }
 .customize-section {

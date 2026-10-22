@@ -96,13 +96,68 @@ function ChannelRow({ channel, index, error, disabled, onChange, onRemove }) {
   )
 }
 
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+const SERIAL_OPTIONS = { baudRate: 115200 }
+// esp-web-tools closes its port as its dialog goes, without waiting; opening
+// the same port is retried until that has finished.
+const REOPEN_WINDOW_MS = 5_000
+
+// Opens the installer's port again. If the device came back from its reboot as
+// a new port, an already-granted port of the same USB device stands in. Only a
+// click (Retry) may fall back to the port prompt.
+async function openDevicePort(preferred, { waitMs = 0, allowPrompt = false } = {}) {
+  const candidates = preferred ? [preferred] : []
+  if (preferred) {
+    const want = preferred.getInfo?.() ?? {}
+    try {
+      for (const port of await navigator.serial.getPorts()) {
+        const info = port.getInfo?.() ?? {}
+        if (port !== preferred && want.usbVendorId != null
+          && info.usbVendorId === want.usbVendorId && info.usbProductId === want.usbProductId) {
+          candidates.push(port)
+        }
+      }
+    } catch {}
+  }
+  const deadline = Date.now() + waitMs
+  while (candidates.length) {
+    for (const port of candidates) {
+      try {
+        await port.open(SERIAL_OPTIONS)
+        return port
+      } catch {}
+    }
+    if (Date.now() >= deadline) break
+    await delay(300)
+  }
+  if (!allowPrompt) {
+    throw new CustomizeError('The device\'s serial port could not be opened again. Click Retry and pick its port.')
+  }
+  const port = await navigator.serial.requestPort()
+  await port.open(SERIAL_OPTIONS)
+  return port
+}
+
+function applyErrorText(error) {
+  return error?.name === 'NotFoundError'
+    ? 'No device was selected.'
+    : error?.name === 'InvalidStateError' || /already open|failed to open/i.test(error?.message ?? '')
+      ? 'The serial port is busy. Close any serial monitors, then retry.'
+      : error instanceof CustomizeError
+        ? error.message
+        : `Could not apply: ${error?.message || 'Unknown serial error'}`
+}
+
 // Flash and Customize: the user picks settings, Continue saves them in the
 // browser and starts the installer through `onFlash` (Flasher's esp-web-tools
-// button). `flashCount` goes up when that install finishes, which reopens the
-// dialog to send the settings to the device over USB serial (see customize.js).
-export default function Customize({ supported, canFlash = false, onFlash, flashCount = 0 }) {
+// button). When that install finishes Flasher passes `flashed` ({ id, port }),
+// and the settings are sent to the device over that same port with no further
+// prompt (see customize.js); progress shows inline under the buttons.
+export default function Customize({ supported, canFlash = false, onFlash, flashed = null }) {
   const [open, setOpen] = useState(false)
-  const [afterFlash, setAfterFlash] = useState(false)
   const [settings, setSettings] = useState(loadCustomization)
   const [draft, setDraft] = useState(settings)
   const [phase, setPhase] = useState('idle')
@@ -115,35 +170,29 @@ export default function Customize({ supported, canFlash = false, onFlash, flashC
   const returnRef = useRef(null)
   const mountedRef = useRef(true)
   const logoRequestRef = useRef(0)
-  const lastFlashRef = useRef(flashCount)
+  const lastFlashRef = useRef(flashed?.id ?? 0)
+  const flashPortRef = useRef(null)
+  const applyingRef = useRef(false)
 
   const secure = typeof window === 'undefined' || window.isSecureContext
   const available = supported && secure
-  const busy = phase === 'applying'
-  const busyRef = useRef(false)
-  busyRef.current = busy
+  const applying = phase === 'applying'
   const draftCount = customizationCount(draft)
   const errors = customizationErrors(draft)
   const invalid = errors.some(Boolean)
   const profile = PROFILES.find(p => p.id === profileId)
 
-  function openModal(event, fromFlash = false) {
+  function openModal(event) {
     if (!panelRef.current?.contains(document.activeElement)) {
       returnRef.current = event?.currentTarget ?? document.activeElement
     }
     setDraft(settings)
     setProfileId('')
     setLogoError('')
-    setAfterFlash(fromFlash)
-    setPhase('idle')
-    setStatus(fromFlash
-      ? 'Firmware installed. Once the device has rebooted, click Apply to device and pick its port again.'
-      : '')
     setOpen(true)
   }
 
   function requestClose() {
-    if (busyRef.current) return
     setOpen(false)
   }
 
@@ -206,52 +255,45 @@ export default function Customize({ supported, canFlash = false, onFlash, flashC
     if (invalid || !draftCount) return
     commitDraft()
     if (!onFlash?.()) {
-      setPhase('error')
-      setStatus('The installer could not be started. Pick a board and version first.')
+      setLogoError('The installer could not be started. Pick a board and version first.')
       return
     }
+    setPhase('idle')
+    setStatus('')
     setOpen(false)
   }
 
-  async function apply() {
-    if (invalid) return
-    const chosen = commitDraft()
-    if (!customizationCount(chosen)) return
-    if (!available) {
-      setPhase('error')
-      setStatus(supported
-        ? 'Web Serial requires HTTPS or localhost.'
-        : 'Web Serial is not available in this browser.')
-      return
-    }
-
+  // `retry` runs inside a click, so it may fall back to the port prompt.
+  async function apply({ retry = false } = {}) {
+    if (applyingRef.current) return
+    const chosen = settings
+    if (!customizationCount(chosen) || customizationErrors(chosen).some(Boolean)) return
+    applyingRef.current = true
     setPhase('applying')
-    setStatus('Select the connected Camillia device in the browser prompt.')
+    setStatus('Firmware installed. Connecting to the device to apply your settings...')
     let port = null
     try {
-      port = await navigator.serial.requestPort()
-      await port.open({ baudRate: 115200 })
+      port = await openDevicePort(flashPortRef.current, {
+        waitMs: retry ? 0 : REOPEN_WINDOW_MS,
+        allowPrompt: retry,
+      })
+      flashPortRef.current = port
       const result = await applyCustomization(port, chosen, text => {
         if (mountedRef.current) setStatus(text)
       })
       if (!mountedRef.current) return
       setPhase('ready')
       setStatus(result.outcome === 'setup'
-        ? 'Saved. Finish setup on the device; your choices take effect when it completes.'
+        ? 'Customization saved. Finish setup on the device; your choices take effect when it completes.'
         : result.outcome === 'rebooting'
-          ? 'Saved. The device is rebooting with your choices.'
+          ? 'Customization saved. The device is rebooting with your choices.'
           : 'The device already had these settings.')
     } catch (error) {
       if (!mountedRef.current) return
       setPhase('error')
-      setStatus(error?.name === 'NotFoundError'
-        ? 'No device was selected.'
-        : error?.name === 'InvalidStateError' || /already open|failed to open/i.test(error?.message ?? '')
-          ? 'The serial port is busy. Close the flash dialog and any serial monitors, then retry.'
-          : error instanceof CustomizeError
-            ? error.message
-            : `Could not apply: ${error?.message || 'Unknown serial error'}`)
+      setStatus(applyErrorText(error))
     } finally {
+      applyingRef.current = false
       if (port) {
         try { await port.close() } catch {}
       }
@@ -259,10 +301,12 @@ export default function Customize({ supported, canFlash = false, onFlash, flashC
   }
 
   useEffect(() => {
-    if (flashCount === lastFlashRef.current) return
-    lastFlashRef.current = flashCount
-    if (customizationCount(settings)) openModal(null, true)
-  }, [flashCount])
+    const id = flashed?.id ?? 0
+    if (id === lastFlashRef.current) return
+    lastFlashRef.current = id
+    flashPortRef.current = flashed?.port ?? null
+    if (customizationCount(settings)) apply()
+  }, [flashed])
 
   useEffect(() => {
     if (!open) return undefined
@@ -320,6 +364,31 @@ export default function Customize({ supported, canFlash = false, onFlash, flashC
         Flash and Customize
       </button>
 
+      {status && (
+        <div
+          className={`debug-report-status debug-report-status-${applying ? 'capturing' : phase} customize-inline-status`}
+          role="status"
+        >
+          <span className="debug-report-status-dot" aria-hidden="true" />
+          <span>{status}</span>
+          {!applying && (
+            <span className="customize-inline-actions">
+              {phase === 'error' && (
+                <button type="button" className="flasher-row-btn" onClick={() => apply({ retry: true })}>
+                  Retry
+                </button>
+              )}
+              <button
+                type="button"
+                className="customize-link"
+                onClick={() => { setPhase('idle'); setStatus('') }}
+              >
+                Dismiss
+              </button>
+            </span>
+          )}
+        </div>
+      )}
       {open && (
         <div
           className="debug-report-modal"
@@ -343,7 +412,6 @@ export default function Customize({ supported, canFlash = false, onFlash, flashC
                 ref={closeRef}
                 className="debug-report-close"
                 onClick={requestClose}
-                disabled={busy}
               >
                 Close
               </button>
@@ -361,7 +429,6 @@ export default function Customize({ supported, canFlash = false, onFlash, flashC
               <select
                 value={profileId}
                 onChange={event => chooseProfile(event.target.value)}
-                disabled={busy}
               >
                 <option value="">My own settings</option>
                 {PROFILES.map(p => (
@@ -380,7 +447,6 @@ export default function Customize({ supported, canFlash = false, onFlash, flashC
               <select
                 value={draft.preset}
                 onChange={event => setDraft(d => ({ ...d, preset: event.target.value }))}
-                disabled={busy}
               >
                 <option value="">Don't change (device default)</option>
                 {RADIO_PRESETS.map(p => (
@@ -405,15 +471,15 @@ export default function Customize({ supported, canFlash = false, onFlash, flashC
                     : <span>{draft.logo === 'clear' ? 'Camillia (default title)' : 'No change'}</span>}
                 </div>
                 <div className="customize-logo-actions">
-                  <label className={`flasher-row-btn customize-file${busy ? ' is-disabled' : ''}`}>
+                  <label className="flasher-row-btn customize-file">
                     Choose image…
-                    <input type="file" accept="image/*" onChange={chooseLogo} disabled={busy} />
+                    <input type="file" accept="image/*" onChange={chooseLogo} />
                   </label>
                   <button
                     type="button"
                     className="customize-link"
                     onClick={() => setLogo('clear')}
-                    disabled={busy || draft.logo === 'clear'}
+                    disabled={draft.logo === 'clear'}
                   >
                     Restore default title
                   </button>
@@ -422,7 +488,6 @@ export default function Customize({ supported, canFlash = false, onFlash, flashC
                       type="button"
                       className="customize-link"
                       onClick={() => setLogo('')}
-                      disabled={busy}
                     >
                       Don't change
                     </button>
@@ -444,7 +509,6 @@ export default function Customize({ supported, canFlash = false, onFlash, flashC
                   type="checkbox"
                   checked={Boolean(draft.channels)}
                   onChange={event => setChannels(() => (event.target.checked ? [newChannel(0)] : null))}
-                  disabled={busy}
                 />
                 Replace the device's channels
               </label>
@@ -457,7 +521,6 @@ export default function Customize({ supported, canFlash = false, onFlash, flashC
                         channel={channel}
                         index={index}
                         error={errors[index]}
-                        disabled={busy}
                         onChange={next => setChannels(list => list.map((c, i) => (i === index ? next : c)))}
                         onRemove={() => setChannels(list => list.filter((_, i) => i !== index))}
                       />
@@ -467,7 +530,7 @@ export default function Customize({ supported, canFlash = false, onFlash, flashC
                     type="button"
                     className="flasher-row-btn"
                     onClick={() => setChannels(list => [...list, newChannel(list.length)])}
-                    disabled={busy || draft.channels.length >= MAX_CHANNELS}
+                    disabled={draft.channels.length >= MAX_CHANNELS}
                   >
                     Add channel
                   </button>
@@ -482,42 +545,22 @@ export default function Customize({ supported, canFlash = false, onFlash, flashC
               )}
             </fieldset>
 
-            {status && (
-              <div className={`debug-report-status debug-report-status-${phase === 'applying' ? 'capturing' : phase}`} role="status">
-                <span className="debug-report-status-dot" aria-hidden="true" />
-                <span>{status}</span>
-              </div>
-            )}
-
             <div className="debug-report-actions">
               <button
                 type="button"
                 className="flasher-row-btn"
                 onClick={requestClose}
-                disabled={busy}
               >
-                {afterFlash ? 'Skip' : 'Cancel'}
+                Cancel
               </button>
-              {afterFlash ? (
-                <button
-                  type="button"
-                  className="btn"
-                  onClick={apply}
-                  disabled={busy || !draftCount || !available || invalid}
-                  title={!available ? 'Web Serial requires Chrome, Edge, or Opera on desktop over HTTPS' : undefined}
-                >
-                  {busy ? 'Applying…' : 'Apply to device'}
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className="btn"
-                  onClick={continueToFlash}
-                  disabled={!draftCount || !available || invalid}
-                >
-                  Continue to flash
-                </button>
-              )}
+              <button
+                type="button"
+                className="btn"
+                onClick={continueToFlash}
+                disabled={!draftCount || !available || invalid || applying}
+              >
+                Continue to flash
+              </button>
             </div>
             {!draftCount && (
               <p className="browser-note">Pick at least one setting.</p>
@@ -525,10 +568,10 @@ export default function Customize({ supported, canFlash = false, onFlash, flashC
             {invalid && (
               <p className="browser-note">Fix the highlighted channels first.</p>
             )}
-            {draftCount > 0 && !afterFlash && (
+            {draftCount > 0 && (
               <p className="browser-note">
-                Continue opens the installer. When the flash finishes, this dialog
-                comes back to send your choices to the device.
+                Continue opens the installer. When the flash finishes, your choices
+                are sent to the device automatically over the same connection.
               </p>
             )}
           </div>

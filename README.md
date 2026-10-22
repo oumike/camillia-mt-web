@@ -143,8 +143,10 @@ into `public/logos/`). Each profile lists the settings it recommends that the
 flasher cannot set yet, such as MQTT servers and the hop limit.
 
 **Continue to flash** keeps the choices in `localStorage` and opens the
-installer. When that flash finishes the dialog returns to apply them. Applying
-opens a 115200-baud Web Serial session and speaks
+installer. When that flash finishes the installer dialog closes itself and the
+choices are applied automatically over the port the installer already had, so
+there is no second prompt; progress shows under the buttons, with **Retry** if
+it fails. Applying opens a 115200-baud Web Serial session and speaks
 camillia-mt's `cfg` CLI; see [`src/customize.js`](src/customize.js):
 
 - `cfg caps` reports what the device supports, its channel slots and the size of
