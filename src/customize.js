@@ -14,6 +14,8 @@
 // On a fresh install the device holds the settings until on-device setup
 // finishes; on an existing install, commit saves and reboots.
 
+import { withBase } from './basePath'
+
 // Mirrors kPresets in camillia-mt's src/config_io.cpp. `name` is the channel
 // name the firmware matches on; `tiny` marks the 15.6 kHz pair that only runs
 // on radios with a TCXO (the device rejects them otherwise).
@@ -56,13 +58,16 @@ export function newChannel(index) {
 }
 
 // Community setups, as published by each mesh. Only what the flasher can set
-// is here; `notes` lists the rest of their advice.
+// is here; `notes` lists the rest of their advice. Logos are rendered from each
+// community's own SVG (chicagolandmesh.org/assets/images/logo-clear.svg,
+// michmesh.net/img/michmesh-logo-dark.svg).
 export const PROFILES = [
   {
     id: 'chimesh',
     label: 'ChiMesh (Chicagoland)',
     url: 'https://chicagolandmesh.org/guides/meshtastic/getting-started/configure/',
     preset: 'LongFast',
+    logo: withBase('/logos/chimesh.png'),
     channels: [PRIMARY_CHANNEL, secondary('Chicago', CHICAGO_PSK)],
     notes: 'ChiMesh also recommends hop limit 7, a 3-hour NodeInfo interval and MQTT via mqtt.chimesh.org (root topic msh/US/IL/Chi); set those on the device.',
   },
@@ -71,6 +76,7 @@ export const PROFILES = [
     label: 'MichMesh (Michigan)',
     url: 'https://michmesh.net/docs/Meshtastic/Getting%20Started',
     preset: 'LongFast',
+    logo: withBase('/logos/michmesh.png'),
     channels: [
       PRIMARY_CHANNEL,
       secondary('Michigan', 'MA=='),
@@ -238,10 +244,12 @@ function canvasPng(canvas) {
   return new Promise(resolve => canvas.toBlob(resolve, 'image/png'))
 }
 
-// Turns a chosen file into a PNG data URL small enough to remember in the
-// browser; the device-sized version is made at apply time.
-export async function prepareLogoSource(file) {
-  const url = URL.createObjectURL(file)
+// Turns a chosen file (or a same-origin image URL) into a PNG data URL small
+// enough to remember in the browser; the device-sized version is made at apply
+// time.
+export async function prepareLogoSource(source) {
+  const isUrl = typeof source === 'string'
+  const url = isUrl ? source : URL.createObjectURL(source)
   try {
     const img = await loadImage(url)
     const scale = Math.min(1, 640 / img.naturalWidth, 320 / img.naturalHeight)
@@ -251,7 +259,7 @@ export async function prepareLogoSource(file) {
     canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height)
     return canvas.toDataURL('image/png')
   } finally {
-    URL.revokeObjectURL(url)
+    if (!isUrl) URL.revokeObjectURL(url)
   }
 }
 

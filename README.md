@@ -127,9 +127,10 @@ page. If the serial output is too large for a reliable issue URL, the prefilled
 issue contains a compact excerpt and the full sanitized report is copied for
 optional pasting.
 
-### Customize
+### Flash and Customize
 
-**Customize** pre-configures an install. It can set:
+**Flash and Customize**, beside the Flash button, pre-configures an install. A
+plain **Flash** never asks about customization. It can set:
 
 - the radio preset;
 - a boot logo, shown on the splash card instead of the Camillia title;
@@ -137,11 +138,13 @@ optional pasting.
   has a name, a key, position sharing, and MQTT uplink and downlink.
 
 **Start from** fills these in from a community setup: ChiMesh (Chicagoland) or
-MichMesh (Michigan). Each profile lists the settings it recommends that the
+MichMesh (Michigan), including the community's logo (rendered from its own SVG
+into `public/logos/`). Each profile lists the settings it recommends that the
 flasher cannot set yet, such as MQTT servers and the hop limit.
 
-Choices are kept in `localStorage`, and when a flash finishes the dialog offers
-to apply them. Applying opens a 115200-baud Web Serial session and speaks
+**Continue to flash** keeps the choices in `localStorage` and opens the
+installer. When that flash finishes the dialog returns to apply them. Applying
+opens a 115200-baud Web Serial session and speaks
 camillia-mt's `cfg` CLI; see [`src/customize.js`](src/customize.js):
 
 - `cfg caps` reports what the device supports, its channel slots and the size of

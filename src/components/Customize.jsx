@@ -26,10 +26,6 @@ function pskMode(psk) {
   return psk === 'default' || psk === 'none' ? psk : 'custom'
 }
 
-function sameSettings(a, b) {
-  return JSON.stringify(a) === JSON.stringify(b)
-}
-
 function ChannelRow({ channel, index, error, disabled, onChange, onRemove }) {
   const mode = pskMode(channel.psk)
   const set = patch => onChange({ ...channel, ...patch })
@@ -100,10 +96,11 @@ function ChannelRow({ channel, index, error, disabled, onChange, onRemove }) {
   )
 }
 
-// Pre-configuration for a Camillia-MT install. Choices are kept in the browser
-// and sent to the device over USB serial (see customize.js). `flashCount` goes
-// up each time a flash finishes, which offers to apply them straight away.
-export default function Customize({ supported, flashCount = 0 }) {
+// Flash and Customize: the user picks settings, Continue saves them in the
+// browser and starts the installer through `onFlash` (Flasher's esp-web-tools
+// button). `flashCount` goes up when that install finishes, which reopens the
+// dialog to send the settings to the device over USB serial (see customize.js).
+export default function Customize({ supported, canFlash = false, onFlash, flashCount = 0 }) {
   const [open, setOpen] = useState(false)
   const [afterFlash, setAfterFlash] = useState(false)
   const [settings, setSettings] = useState(loadCustomization)
@@ -117,6 +114,7 @@ export default function Customize({ supported, flashCount = 0 }) {
   const closeRef = useRef(null)
   const returnRef = useRef(null)
   const mountedRef = useRef(true)
+  const logoRequestRef = useRef(0)
   const lastFlashRef = useRef(flashCount)
 
   const secure = typeof window === 'undefined' || window.isSecureContext
@@ -124,9 +122,7 @@ export default function Customize({ supported, flashCount = 0 }) {
   const busy = phase === 'applying'
   const busyRef = useRef(false)
   busyRef.current = busy
-  const count = customizationCount(settings)
   const draftCount = customizationCount(draft)
-  const dirty = !sameSettings(draft, settings)
   const errors = customizationErrors(draft)
   const invalid = errors.some(Boolean)
   const profile = PROFILES.find(p => p.id === profileId)
@@ -163,11 +159,28 @@ export default function Customize({ supported, flashCount = 0 }) {
     setProfileId(id)
     const chosen = PROFILES.find(p => p.id === id)
     if (!chosen) return
+    const request = ++logoRequestRef.current
     setDraft(d => ({
       ...d,
       preset: chosen.preset,
       channels: chosen.channels.map(c => ({ ...c })),
     }))
+    if (!chosen.logo) return
+    setLogoError('')
+    prepareLogoSource(chosen.logo)
+      .then(logo => {
+        if (mountedRef.current && logoRequestRef.current === request) setDraft(d => ({ ...d, logo }))
+      })
+      .catch(() => {
+        if (mountedRef.current && logoRequestRef.current === request) {
+          setLogoError(`The ${chosen.label.split(' ')[0]} logo could not be loaded.`)
+        }
+      })
+  }
+
+  function setLogo(logo) {
+    logoRequestRef.current += 1
+    setDraft(d => ({ ...d, logo }))
   }
 
   function setChannels(update) {
@@ -180,16 +193,23 @@ export default function Customize({ supported, flashCount = 0 }) {
     event.target.value = ''
     if (!file) return
     setLogoError('')
+    const request = ++logoRequestRef.current
     try {
       const logo = await prepareLogoSource(file)
-      if (mountedRef.current) setDraft(d => ({ ...d, logo }))
+      if (mountedRef.current && logoRequestRef.current === request) setDraft(d => ({ ...d, logo }))
     } catch (error) {
       if (mountedRef.current) setLogoError(error?.message || 'That file could not be read as an image.')
     }
   }
 
-  function save() {
+  function continueToFlash() {
+    if (invalid || !draftCount) return
     commitDraft()
+    if (!onFlash?.()) {
+      setPhase('error')
+      setStatus('The installer could not be started. Pick a board and version first.')
+      return
+    }
     setOpen(false)
   }
 
@@ -292,9 +312,12 @@ export default function Customize({ supported, flashCount = 0 }) {
         type="button"
         className="btn btn-ghost"
         onClick={event => openModal(event)}
-        title="Pre-configure settings to send to the device after flashing"
+        disabled={!canFlash || !available}
+        title={!available
+          ? 'Web Serial requires Chrome, Edge, or Opera on desktop over HTTPS'
+          : 'Choose settings, flash, then send them to the device'}
       >
-        Customize{count ? ` (${count})` : ''}
+        Flash and Customize
       </button>
 
       {open && (
@@ -313,7 +336,7 @@ export default function Customize({ supported, flashCount = 0 }) {
             <div className="debug-report-head">
               <div>
                 <p className="eyebrow">Pre-configure</p>
-                <h3 id="customize-title">Customize</h3>
+                <h3 id="customize-title">Flash and Customize</h3>
               </div>
               <button
                 type="button"
@@ -348,7 +371,7 @@ export default function Customize({ supported, flashCount = 0 }) {
             </label>
             {profile && (
               <p className="browser-note customize-note">
-                Fills in the radio preset and channels <a href={profile.url} target="_blank" rel="noreferrer">{profile.label.split(' ')[0]}</a> publishes. {profile.notes}
+                Fills in the radio preset, channels and logo <a href={profile.url} target="_blank" rel="noreferrer">{profile.label.split(' ')[0]}</a> publishes. {profile.notes}
               </p>
             )}
 
@@ -389,7 +412,7 @@ export default function Customize({ supported, flashCount = 0 }) {
                   <button
                     type="button"
                     className="customize-link"
-                    onClick={() => setDraft(d => ({ ...d, logo: 'clear' }))}
+                    onClick={() => setLogo('clear')}
                     disabled={busy || draft.logo === 'clear'}
                   >
                     Restore default title
@@ -398,7 +421,7 @@ export default function Customize({ supported, flashCount = 0 }) {
                     <button
                       type="button"
                       className="customize-link"
-                      onClick={() => setDraft(d => ({ ...d, logo: '' }))}
+                      onClick={() => setLogo('')}
                       disabled={busy}
                     >
                       Don't change
@@ -467,36 +490,45 @@ export default function Customize({ supported, flashCount = 0 }) {
             )}
 
             <div className="debug-report-actions">
-              {!afterFlash && (
-                <button
-                  type="button"
-                  className="flasher-row-btn"
-                  onClick={save}
-                  disabled={busy || !dirty}
-                >
-                  Save
-                </button>
-              )}
               <button
                 type="button"
-                className="btn"
-                onClick={apply}
-                disabled={busy || !draftCount || !available || invalid}
-                title={!available ? 'Web Serial requires Chrome, Edge, or Opera on desktop over HTTPS' : undefined}
+                className="flasher-row-btn"
+                onClick={requestClose}
+                disabled={busy}
               >
-                {busy ? 'Applying…' : 'Apply to device'}
+                {afterFlash ? 'Skip' : 'Cancel'}
               </button>
+              {afterFlash ? (
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={apply}
+                  disabled={busy || !draftCount || !available || invalid}
+                  title={!available ? 'Web Serial requires Chrome, Edge, or Opera on desktop over HTTPS' : undefined}
+                >
+                  {busy ? 'Applying…' : 'Apply to device'}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={continueToFlash}
+                  disabled={!draftCount || !available || invalid}
+                >
+                  Continue to flash
+                </button>
+              )}
             </div>
             {!draftCount && (
-              <p className="browser-note">Pick at least one setting to apply.</p>
+              <p className="browser-note">Pick at least one setting.</p>
             )}
             {invalid && (
               <p className="browser-note">Fix the highlighted channels first.</p>
             )}
             {draftCount > 0 && !afterFlash && (
               <p className="browser-note">
-                Saved choices are offered after each flash. Apply to device sends them
-                to a device that is already running Camillia-MT.
+                Continue opens the installer. When the flash finishes, this dialog
+                comes back to send your choices to the device.
               </p>
             )}
           </div>
