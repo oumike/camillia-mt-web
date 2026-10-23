@@ -11,6 +11,7 @@ import {
   REGIONS,
   ROLES,
   SHORT_NAME_MAX,
+  SLOT_MAX,
   SPLASH_CARD_BG,
   CustomizeError,
   applyCustomization,
@@ -24,6 +25,7 @@ import {
   randomPsk,
   saveCustomization,
   setupErrors,
+  slotError,
 } from '../customize.js'
 
 const FOCUSABLE = 'a[href], button:not([disabled]), select:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
@@ -303,6 +305,7 @@ export default function Customize({ supported, canFlash = false, onFlash, flashe
       ...d,
       setup: d.setup && chosen.region ? { ...d.setup, region: chosen.region } : d.setup,
       preset: chosen.preset,
+      slot: chosen.slot ?? 0,
       channels: chosen.channels.map(c => ({ ...c })),
       // Another community's logo must not carry over.
       logo: chosen.logo ? d.logo : '',
@@ -591,6 +594,33 @@ export default function Customize({ supported, canFlash = false, onFlash, flashe
                 ? <>{formatBw(selected.bw)}, SF{selected.sf}, CR 4/{selected.cr}. Every node on your mesh must use the same preset.{selected.tiny ? ' Only radios with a TCXO can run this; others refuse it.' : ''}</>
                 : 'Keeps the firmware default: Long Fast, or Long Turbo when the region is set to US during setup.'}
             </p>
+            {selected && (
+              <>
+                <label className="customize-input customize-field">
+                  <span>Frequency slot</span>
+                  <input
+                    type="number"
+                    min="0"
+                    max={SLOT_MAX}
+                    step="1"
+                    inputMode="numeric"
+                    placeholder="Preset's own"
+                    value={draft.slot || ''}
+                    aria-invalid={slotError(draft.slot) ? true : undefined}
+                    onChange={event => {
+                      const text = event.target.value.trim()
+                      setDraft(d => ({ ...d, slot: text === '' ? 0 : Number(text) }))
+                    }}
+                  />
+                </label>
+                <p className={slotError(draft.slot) ? 'customize-error' : 'browser-note customize-note'}>
+                  {slotError(draft.slot)
+                    || (draft.slot
+                      ? `Pins the preset to slot ${draft.slot}, numbered as in the Meshtastic apps. The device shows it as custom modem settings.`
+                      : 'Blank uses the slot the preset picks for itself, as most meshes do.')}
+                </p>
+              </>
+            )}
 
             <fieldset className="customize-section">
               <legend>Boot logo</legend>

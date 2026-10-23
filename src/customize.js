@@ -4,6 +4,7 @@
 //   cfg caps                -> [cfg] caps v=1 firstboot=0|1 keys=preset,channels,logo channels=10
 //                              logo=WxH logobg=RRGGBB logomax=8192 presets=LongFast,...
 //   cfg set preset <name>   -> [cfg] ok preset=<Name> staged | [cfg] err preset: ...
+//   cfg set slot <n>        -> [cfg] ok slot=<n> staged (1-based frequency slot; 0 = the preset's own)
 //   cfg channels clear      -> [cfg] ok channels cleared slots=N
 //   cfg set channel <i> role=.. name=<%-encoded> psk=default|none|<base64> pos=0|1 up=0|1 down=0|1
 //                           -> [cfg] ok channel <i> staged | [cfg] err channel ...
@@ -55,6 +56,8 @@ export const SPLASH_CARD_BG = '#100C29'
 // bytes. An empty primary name means "named after the preset".
 const PRIMARY_CHANNEL = { name: '', psk: 'default', pos: true, up: true, down: false }
 const secondary = (name, psk, mqtt = false) => ({ name, psk, pos: false, up: mqtt, down: mqtt })
+// A primary channel with its own name and key, as Freq51's.
+const namedPrimary = (name, psk) => ({ ...PRIMARY_CHANNEL, name, psk })
 const CHICAGO_PSK = 'H1HDyEqg5W9XFilicVTIaoWYrs8URmWGo5fAYfbxQgo='
 
 export function newChannel(index) {
@@ -63,12 +66,12 @@ export function newChannel(index) {
 
 // Community setups, as published by each mesh. Only what the flasher can set
 // is here; `notes` lists the rest of their advice. A mesh is listed only when
-// its radio is a stock preset on that preset's default frequency slot: the
-// flasher cannot pin a slot or set a custom frequency, so Freq51 (slot 51),
-// nyme.sh (MediumSlow slot 48), NoVA (slot 9), MeshOregon, YYCMesh, Spain,
-// Gaulix and Estonia are left out. An empty `preset` keeps the device's own;
-// `url` is optional. Logos are rendered from each
-// community's own SVG (chicagolandmesh.org/assets/images/logo-clear.svg,
+// its radio is a stock preset, on its default frequency slot or the one in
+// `slot` (1-based, as the Meshtastic apps number them). The flasher cannot set
+// a frequency that is not on a slot, so MeshOregon, YYCMesh and Spain are left
+// out. An empty `preset` keeps the device's own; `url` is optional. Logos are
+// rendered from each community's own SVG
+// (chicagolandmesh.org/assets/images/logo-clear.svg,
 // michmesh.net/img/michmesh-logo-dark.svg).
 export const PROFILES = [
   {
@@ -159,6 +162,7 @@ export const PROFILES = [
     id: 'floridamesh',
     area: 'United States',
     label: 'Florida Mesh (Florida)',
+    url: 'https://areyoumeshingwith.us/docs/meshtastic/regional-lora-settings/',
     preset: 'LongFast',
     region: 'US',
     channels: [
@@ -179,6 +183,86 @@ export const PROFILES = [
     region: 'US',
     channels: [PRIMARY_CHANNEL, secondary('ConnNet', 'pJgk5XqJY8Ar+jSqC5W81g==')],
     notes: 'CT Mesh\'s broker, mqtt.ctmesh.org (meshdev / large4cats, root topic msh/US/CT), takes uplink only; set that on the device.',
+  },
+  {
+    id: 'nwimesh',
+    area: 'United States',
+    label: 'NWI Mesh Net (NW Indiana)',
+    url: 'https://nwimesh.net/local-encrypted-channel',
+    preset: 'LongFast',
+    region: 'US',
+    channels: [PRIMARY_CHANNEL, { ...secondary('Testing', 'default'), up: true }, secondary('NWI', CHICAGO_PSK)],
+    notes: 'NWI shares its key with ChiMesh\'s Chicago channel. It recommends hop limit 7 and its broker, mqtt.nwimesh.net (meshdev / large4cats, root topic msh/US/IN/NWI); set those on the device.',
+  },
+  {
+    id: 'bostonmesh',
+    area: 'United States',
+    label: 'Greater Boston Mesh (Boston)',
+    url: 'https://bostonme.sh/meshtastic',
+    preset: 'LongFast',
+    region: 'US',
+    channels: [PRIMARY_CHANNEL],
+    notes: 'Greater Boston Mesh uses the default channel. Its broker is mqttmt01.bostonme.sh port 1883 (meshdev / large4cats, root topic msh/US/MA); set that on the device.',
+  },
+  {
+    id: 'centralvalley',
+    area: 'United States',
+    label: 'Central Valley Mesh (Central CA)',
+    url: 'https://centralvalleymesh.net/',
+    preset: '',
+    region: 'US',
+    channels: [PRIMARY_CHANNEL],
+    notes: 'Central Valley Mesh runs Long Fast or Medium Fast depending on the area, so the device keeps its own; ask in their Discord. Their community channel CVM is shared there too. The broker is mqtt.cvme.sh (cvmesh / large4dogs, root topic msh/US/CA/centralvalley); set that on the device.',
+  },
+  {
+    id: 'freq51',
+    area: 'United States',
+    label: 'Freq51 (Utah and Idaho)',
+    url: 'https://freq51.net/channels',
+    preset: 'MediumFast',
+    slot: 51,
+    region: 'US',
+    channels: [
+      namedPrimary('Freq51', '1A=='),
+      secondary('MediumFast', 'default'),
+      secondary('DC801', 'MHHa9wlKe4chJ01SuTKt1RnqbSXv4UJNAP+ONcKfa0c='),
+      secondary('SAINTCON', 'dFa5cC4GuZ9AnFgPKzBjzqO6Ch8doQdOMqzwlmEff0Q='),
+      secondary('2ndStarLabs', 'BRdqPvLgcJKPN5BBCHUVxU6YavR11R3HAoy5wSZdSqc='),
+      secondary('IDAlerts', 'EdYPaoEzYapldDMwSIeYaLuOVhEqAj5S0Hm5owRoWEg='),
+      secondary('IDEmergency', 'z/N/1qMBO9LubPEQ7tjOZfUrFuRCmni2OosuNgHpgJM='),
+      secondary('BBBB-Alerts', 'none'),
+    ],
+    notes: 'Freq51 runs Medium Fast on slot 51 (914.625 MHz) with hop limit 7. Its MQTT root topic is msh/US/UT, uplink on and downlink off; the server is shared on their Discord.',
+  },
+  {
+    id: 'nymesh',
+    area: 'United States',
+    label: 'nyme.sh (New York City)',
+    preset: 'MediumSlow',
+    slot: 48,
+    region: 'US',
+    channels: [PRIMARY_CHANNEL],
+    notes: 'nyme.sh\'s broker is mqtt.nyme.sh (meshdev / large4cats, root topic msh/US/NY) and takes no downlink; set that on the device.',
+  },
+  {
+    id: 'nova',
+    area: 'United States',
+    label: 'NoVA (Northern Virginia)',
+    preset: 'LongFast',
+    slot: 9,
+    region: 'US',
+    channels: [PRIMARY_CHANNEL],
+    notes: 'Slot 9 comes from a single source; check with the local mesh.',
+  },
+  {
+    id: 'showmemesh',
+    area: 'United States',
+    label: 'Show Me Mesh (Jefferson City, MO)',
+    preset: 'MediumSlow',
+    slot: 1,
+    region: 'US',
+    channels: [PRIMARY_CHANNEL],
+    notes: '',
   },
   {
     id: 'meshavl',
@@ -211,19 +295,32 @@ export const PROFILES = [
     id: 'baymesh',
     area: 'United States',
     label: 'BayMesh (SF Bay Area)',
+    url: 'https://bayme.sh/docs/public-channels/',
     preset: 'MediumFast',
     region: 'US',
-    channels: [PRIMARY_CHANNEL],
-    notes: 'BayMesh\'s broker is mqtt.bayme.sh port 1883 (meshdev / large4cats, root topic msh/US/bayarea); set that on the device.',
+    channels: [
+      PRIMARY_CHANNEL,
+      secondary('NoBots', 'NQ=='),
+      secondary('Ham', 'CQ=='),
+      secondary('MeshQuake', 'EQ=='),
+      secondary('BayMeshNews', '5g=='),
+      secondary('SF', 'SA=='),
+      secondary('Oakland', 'OA=='),
+      secondary('Berkeley', 'none'),
+      secondary('CRUZ', 'NA=='),
+      secondary('Test', 'TQ=='),
+    ],
+    notes: 'BayMesh lists more public channels than fit (First 1A==, Retro eQ==, Boozin\' ew==, TheBadPlace 5g==). It recommends hop limit 4 for relays and 6 for handhelds, and its broker is mqtt.bayme.sh (meshdev / large4cats, root topic msh/US/bayarea); set those on the device. Ten channels need a device with ten slots (the Cardputer has eight).',
   },
   {
     id: 'socalmesh',
     area: 'United States',
     label: 'SoCal Mesh (Southern California)',
+    url: 'https://socalmesh.org/',
     preset: 'LongTurbo',
     region: 'US',
     channels: [PRIMARY_CHANNEL],
-    notes: 'SoCal Mesh\'s broker is mqtt.socalmesh.org (meshdev / large4cats, root topic msh/US/CA/socalmesh); set that on the device.',
+    notes: 'Long Turbo on slot 14 is what SoCal Mesh\'s home page recommends; its older best-practices page still says Long Fast on slot 20. Their broker is mqtt.socalmesh.org (meshdev / large4cats, root topic msh/US/CA/socalmesh); set that on the device.',
   },
   {
     id: 'phillymesh',
@@ -247,10 +344,11 @@ export const PROFILES = [
     id: 'mspmesh',
     area: 'United States',
     label: 'MSP Mesh (Twin Cities)',
+    url: 'https://mspmesh.org/settings/',
     preset: 'MediumFast',
     region: 'US',
     channels: [PRIMARY_CHANNEL],
-    notes: '',
+    notes: 'MSP Mesh suggests 3 to 5 hops inside the 494/694 loop; set that on the device.',
   },
   {
     id: 'mbug',
@@ -294,6 +392,17 @@ export const PROFILES = [
     notes: 'The radio preset differs by city, so the device keeps its own; BairesMesh runs Medium Fast. MeshArg asks for no MQTT on its networks.',
   },
   {
+    id: 'meshtw',
+    area: 'Americas and Asia-Pacific',
+    label: 'MeshTW (Taiwan)',
+    url: 'https://hackmd.io/@NeoChen1024/By4pGMZvle',
+    preset: 'MediumFast',
+    slot: 1,
+    region: 'TW',
+    channels: [PRIMARY_CHANNEL],
+    notes: 'Taiwan\'s community moved from Long Fast to Medium Fast on slot 1 (920.125 MHz), furthest from the LTE band. Their MQTT root topic is msh/TW.',
+  },
+  {
     id: 'italia',
     area: 'Europe',
     label: 'Meshtastic Italia (Italy)',
@@ -317,6 +426,17 @@ export const PROFILES = [
     notes: 'Mesh Hessen\'s broker is mqtt.meshhessen.de (meshhessen / meshhessen, root topic msh/EU_868); set that on the device.',
   },
   {
+    id: 'gaulix',
+    area: 'Europe',
+    label: 'Gaulix (France)',
+    url: 'https://gaulix.fr/docs-parametrage/parametrage-rapide-flash-reglages-ajout-de-canaux-via-qr-code/',
+    preset: 'LongMod',
+    slot: 1,
+    region: 'EU_868',
+    channels: [PRIMARY_CHANNEL],
+    notes: 'Gaulix runs Long Moderate at 869.4625 MHz (slot 1). Its channels come from the QR codes on its site; add them on the device. MQTT is per-user (root topic msh/EU_868).',
+  },
+  {
     id: 'berlin',
     area: 'Europe',
     label: 'Berlin Mesh (Berlin)',
@@ -329,10 +449,17 @@ export const PROFILES = [
     id: 'portugal',
     area: 'Europe',
     label: 'Meshtastic Portugal',
+    url: 'https://meshtastic.pt/channels',
     preset: 'LongFast',
     region: 'EU_868',
-    channels: [PRIMARY_CHANNEL, secondary('SOS', 'none'), secondary('Iberia', 'none')],
-    notes: 'SOS and Iberia are unencrypted. The community uses a hop limit of 4 and its own broker, mqtt.meshtastic.pt (meshdev / large4cats, root topic msh); set those on the device.',
+    channels: [
+      PRIMARY_CHANNEL,
+      secondary('SOS', 'default', true),
+      secondary('Iberia', 'default', true),
+      secondary('Portugal_RF', 'default'),
+      secondary('MFTest', 'default', true),
+    ],
+    notes: 'Portugal_RF stays on the radio. The community also publishes a channel for each district (see their channel list), uses a hop limit of 4 and runs its own broker, mqtt.meshtastic.pt (meshdev / large4cats, root topic msh); set those on the device.',
   },
   {
     id: 'finland',
@@ -353,6 +480,26 @@ export const PROFILES = [
     notes: 'Hungary\'s 433 MHz network is on a frequency the flasher cannot set. The community broker is mqtt.creativo.hu (meshdev / large4cats, root topic msh/EU_868/HU).',
   },
   {
+    id: 'hungary-433',
+    area: 'Europe',
+    label: 'Hungary (433 MHz)',
+    preset: 'LongFast',
+    slot: 1,
+    region: 'EU_433',
+    channels: [PRIMARY_CHANNEL, secondary('Hungary', 'default')],
+    notes: 'Long Fast at 433.125 MHz (slot 1). The broker is mqtt.creativo.hu (meshdev / large4cats, root topic msh/EU_433/HU).',
+  },
+  {
+    id: 'kyiv',
+    area: 'Europe',
+    label: 'Kyiv (433 MHz)',
+    preset: 'LongFast',
+    slot: 1,
+    region: 'EU_433',
+    channels: [PRIMARY_CHANNEL],
+    notes: 'Long Fast at 433.125 MHz (slot 1).',
+  },
+  {
     id: 'switzerland',
     area: 'Europe',
     label: 'Switzerland',
@@ -365,6 +512,7 @@ export const PROFILES = [
     id: 'stockholm',
     area: 'Europe',
     label: 'Stockholm',
+    url: 'https://meshat.se/meshtastic/cli-konfiguration-fran-grunden/',
     preset: 'MediumFast',
     region: 'EU_868',
     channels: [PRIMARY_CHANNEL],
@@ -409,7 +557,7 @@ export function profileName(profile) {
 
 // What choosing a profile fills in, for the note under the list.
 export function profileFills(profile) {
-  const parts = [profile.preset && 'radio preset', 'channels', profile.logo && 'logo'].filter(Boolean)
+  const parts = [profile.preset && 'radio preset', profile.slot && 'frequency slot', 'channels', profile.logo && 'logo'].filter(Boolean)
   return parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts.at(-1)}` : parts[0]
 }
 
@@ -465,7 +613,9 @@ export function newSetup() {
   return { longName: '', shortName: '', region: 'US', role: 'CLIENT_MUTE', wifiSsid: '', wifiPass: '' }
 }
 
-export const EMPTY_CUSTOMIZATION = { preset: '', channels: null, logo: '', setup: null }
+export const EMPTY_CUSTOMIZATION = { preset: '', slot: 0, channels: null, logo: '', setup: null }
+
+export const SLOT_MAX = 255
 
 const STORAGE_KEY = 'camillia.customize'
 
@@ -513,6 +663,11 @@ export function setupErrors(setup) {
 
 export function customizationInvalid(settings) {
   return customizationErrors(settings).some(Boolean) || Object.keys(setupErrors(settings?.setup)).length > 0
+    || Boolean(slotError(settings?.slot))
+}
+
+export function slotError(slot) {
+  return Number.isInteger(slot) && slot >= 0 && slot <= SLOT_MAX ? '' : `The slot must be a whole number from 0 to ${SLOT_MAX}.`
 }
 
 export function customizationErrors(settings) {
@@ -541,6 +696,7 @@ export function loadCustomization() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null')
     const preset = RADIO_PRESETS.some(p => p.name === saved?.preset) ? saved.preset : ''
+    const slot = Number.isInteger(saved?.slot) && saved.slot >= 0 && saved.slot <= SLOT_MAX ? saved.slot : 0
     const channels = Array.isArray(saved?.channels) && saved.channels.length
       ? saved.channels.slice(0, MAX_CHANNELS).map(cleanChannel)
       : null
@@ -555,7 +711,7 @@ export function loadCustomization() {
           role: ROLES.some(r => r.name === raw.role) ? raw.role : 'CLIENT_MUTE',
         }
       : null
-    return { ...EMPTY_CUSTOMIZATION, preset, channels, logo, setup }
+    return { ...EMPTY_CUSTOMIZATION, preset, slot, channels, logo, setup }
   } catch {
     return { ...EMPTY_CUSTOMIZATION }
   }
@@ -790,7 +946,7 @@ export async function applyCustomization(port, settings, log = () => {}) {
     const wants = key => {
       if (caps.keys.includes(key)) return
       throw new CustomizeError(
-        `This firmware cannot set the ${{ logo: 'boot logo', setup: 'setup answers' }[key] ?? key}. Flash a newer Camillia-MT release and try again.`
+        `This firmware cannot set the ${{ logo: 'boot logo', setup: 'setup answers', slot: 'frequency slot' }[key] ?? key}. Flash a newer Camillia-MT release and try again.`
       )
     }
     const fail = reply => { throw new CustomizeError(reply.replace(/^\[cfg\] err\s*/, '')) }
@@ -802,6 +958,12 @@ export async function applyCustomization(port, settings, log = () => {}) {
       log(`Setting radio preset to ${presetLabel(settings.preset)}...`)
       const set = await command(`cfg set preset ${settings.preset}`, line => /\[cfg\] (ok|err) preset/.test(line))
       if (set.startsWith('[cfg] err')) fail(set)
+      if (settings.slot > 0) {
+        wants('slot')
+        log(`Pinning it to frequency slot ${settings.slot}...`)
+        const pinned = await command(`cfg set slot ${settings.slot}`, line => /\[cfg\] (ok|err) slot/.test(line))
+        if (pinned.startsWith('[cfg] err')) fail(pinned)
+      }
     }
 
     if (settings.channels) {
