@@ -4,6 +4,9 @@ import {
   LONG_NAME_MAX,
   MAX_CHANNELS,
   PROFILES,
+  PROFILE_AREAS,
+  profileFills,
+  profileName,
   RADIO_PRESETS,
   REGIONS,
   ROLES,
@@ -301,6 +304,8 @@ export default function Customize({ supported, canFlash = false, onFlash, flashe
       setup: d.setup && chosen.region ? { ...d.setup, region: chosen.region } : d.setup,
       preset: chosen.preset,
       channels: chosen.channels.map(c => ({ ...c })),
+      // Another community's logo must not carry over.
+      logo: chosen.logo ? d.logo : '',
     }))
     if (!chosen.logo) return
     setLogoError('')
@@ -310,7 +315,7 @@ export default function Customize({ supported, canFlash = false, onFlash, flashe
       })
       .catch(() => {
         if (mountedRef.current && logoRequestRef.current === request) {
-          setLogoError(`The ${chosen.label.split(' ')[0]} logo could not be loaded.`)
+          setLogoError(`The ${profileName(chosen)} logo could not be loaded.`)
         }
       })
   }
@@ -522,14 +527,22 @@ export default function Customize({ supported, canFlash = false, onFlash, flashe
                 onChange={event => chooseProfile(event.target.value)}
               >
                 <option value="">My own settings</option>
-                {PROFILES.map(p => (
-                  <option key={p.id} value={p.id}>{p.label}</option>
+                {PROFILE_AREAS.map(area => (
+                  <optgroup key={area} label={area}>
+                    {PROFILES.filter(p => p.area === area).map(p => (
+                      <option key={p.id} value={p.id}>{p.label}</option>
+                    ))}
+                  </optgroup>
                 ))}
               </select>
             </label>
             {profile && (
               <p className="browser-note customize-note">
-                Fills in the radio preset, channels and logo <a href={profile.url} target="_blank" rel="noreferrer">{profile.label.split(' ')[0]}</a> publishes. {profile.notes}
+                Fills in the {profileFills(profile)} published for{' '}
+                {profile.url
+                  ? <a href={profile.url} target="_blank" rel="noreferrer">{profileName(profile)}</a>
+                  : profileName(profile)}
+                . {profile.notes}
               </p>
             )}
 

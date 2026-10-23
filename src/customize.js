@@ -54,7 +54,7 @@ export const SPLASH_CARD_BG = '#100C29'
 // A channel: psk is 'default' (AQ==), 'none', or a base64 key of 1, 16 or 32
 // bytes. An empty primary name means "named after the preset".
 const PRIMARY_CHANNEL = { name: '', psk: 'default', pos: true, up: true, down: false }
-const secondary = (name, psk) => ({ name, psk, pos: false, up: false, down: false })
+const secondary = (name, psk, mqtt = false) => ({ name, psk, pos: false, up: mqtt, down: mqtt })
 const CHICAGO_PSK = 'H1HDyEqg5W9XFilicVTIaoWYrs8URmWGo5fAYfbxQgo='
 
 export function newChannel(index) {
@@ -62,12 +62,18 @@ export function newChannel(index) {
 }
 
 // Community setups, as published by each mesh. Only what the flasher can set
-// is here; `notes` lists the rest of their advice. Logos are rendered from each
+// is here; `notes` lists the rest of their advice. A mesh is listed only when
+// its radio is a stock preset on that preset's default frequency slot: the
+// flasher cannot pin a slot or set a custom frequency, so Freq51 (slot 51),
+// nyme.sh (MediumSlow slot 48), NoVA (slot 9), MeshOregon, YYCMesh, Spain,
+// Gaulix and Estonia are left out. An empty `preset` keeps the device's own;
+// `url` is optional. Logos are rendered from each
 // community's own SVG (chicagolandmesh.org/assets/images/logo-clear.svg,
 // michmesh.net/img/michmesh-logo-dark.svg).
 export const PROFILES = [
   {
     id: 'chimesh',
+    area: 'United States',
     label: 'ChiMesh (Chicagoland)',
     url: 'https://chicagolandmesh.org/guides/meshtastic/getting-started/configure/',
     preset: 'LongFast',
@@ -78,6 +84,7 @@ export const PROFILES = [
   },
   {
     id: 'michmesh',
+    area: 'United States',
     label: 'MichMesh (Michigan)',
     url: 'https://michmesh.net/docs/Meshtastic/Getting%20Started',
     preset: 'LongFast',
@@ -97,7 +104,314 @@ export const PROFILES = [
     ],
     notes: 'W8ZHO and Chicago come from Muskegon Mesh. Ten channels need a device with ten slots (the Cardputer has eight). MichMesh also recommends "OK to MQTT" with root topic msh/US/MI; set that on the device.',
   },
+  {
+    id: 'iowamesh',
+    area: 'United States',
+    label: 'Iowa Mesh (Iowa)',
+    preset: 'LongFast',
+    region: 'US',
+    channels: [PRIMARY_CHANNEL, secondary('IROMesh', '7V8jZEvMrVrEXx/c8UekOwE+tSlWaWNffKr6zBtQo/A=')],
+    notes: 'Iowa Mesh runs its own MQTT broker, mqtt.iowamesh.net port 8882 (user iromesh, password 2Gab9eAz, root topic iromesh, JSON on, encryption off); set that on the device.',
+  },
+  {
+    id: 'meshstl',
+    area: 'United States',
+    label: 'MeshSTL (St. Louis)',
+    preset: 'LongTurbo',
+    region: 'US',
+    channels: [
+      PRIMARY_CHANNEL,
+      secondary('MeshSTL', 'Rqe4phFE+/ydX1jdHMq7ttwlXTqYqRxj35Of3D6o1PE='),
+      secondary('MeshSTL-EAS', 'default'),
+      secondary('ILMesh-EAS', 'default'),
+      secondary('MAC-EAS', 'default'),
+      secondary('Rolla-EAS', 'default'),
+    ],
+    notes: 'The -EAS channels carry emergency alerts. MeshSTL\'s MQTT broker is mqtt.meshstl.org port 1883 (user MeshSTL, password meshstl, root topic msh/US/MeshSTL); set that on the device.',
+  },
+  {
+    id: 'lzmesh',
+    area: 'United States',
+    label: 'LZMesh (SW Missouri)',
+    preset: '',
+    region: 'US',
+    channels: [
+      PRIMARY_CHANNEL,
+      secondary('LZMesh', 'uLT6S8kQlQHjA7yEtBkzIj3zm6K6lE55mulplDZyF/0=', true),
+      secondary('LZRF', 'dTEweE82YjhWc1pRS1dzY1FESEk4dnlBcVM2SUxmV3c='),
+    ],
+    notes: 'LZMesh doesn\'t publish its radio preset, so the device keeps its own. LZRF stays on the radio; LZMesh also goes to MQTT, via mqtt.lzmesh.com (meshdev / large4cats, root topic msh/LZ); set that on the device.',
+  },
+  {
+    id: 'pugetmesh',
+    area: 'United States',
+    label: 'Puget Mesh (Seattle)',
+    preset: 'LongFast',
+    region: 'US',
+    channels: [
+      PRIMARY_CHANNEL,
+      secondary('PS-Mesh!', 'jHrxpQOq6dEBC5Ldr3ULrQ=='),
+      secondary('PS-MQTT!', 'mqttmqttmqttmqttmqttQQ==', true),
+    ],
+    notes: 'PS-MQTT! is relayed to Puget Mesh\'s Discord. Their broker is meshtastic.pugetmesh.org (meshdev / large4cats, root topic msh/US); set that on the device.',
+  },
+  {
+    id: 'floridamesh',
+    area: 'United States',
+    label: 'Florida Mesh (Florida)',
+    preset: 'LongFast',
+    region: 'US',
+    channels: [
+      PRIMARY_CHANNEL,
+      secondary('FloridaMesh', 'ZdCyZ4ent/NZyeXvNjtBvrrp0lClodUyhYpVL4xshnA=', true),
+      secondary('emergency', 'default'),
+      secondary('weather', 'default'),
+      secondary('testing', 'default'),
+      secondary('telemetry', 'default'),
+    ],
+    notes: 'Long Fast is the statewide preset; Southeast Florida runs Medium Fast. MQTT is mqtt.areyoumeshingwith.us with a per-user login from their Discord bot (root topic msh/US/FL).',
+  },
+  {
+    id: 'ctmesh',
+    area: 'United States',
+    label: 'CT Mesh (Connecticut)',
+    preset: 'LongFast',
+    region: 'US',
+    channels: [PRIMARY_CHANNEL, secondary('ConnNet', 'pJgk5XqJY8Ar+jSqC5W81g==')],
+    notes: 'CT Mesh\'s broker, mqtt.ctmesh.org (meshdev / large4cats, root topic msh/US/CT), takes uplink only; set that on the device.',
+  },
+  {
+    id: 'meshavl',
+    area: 'United States',
+    label: 'MeshAVL (Asheville, NC)',
+    preset: '',
+    region: 'US',
+    channels: [PRIMARY_CHANNEL, secondary('MeshAVL', 'PLUCMx82+f/2etr+yoFXuQ==')],
+    notes: 'MeshAVL doesn\'t publish its radio preset, so the device keeps its own.',
+  },
+  {
+    id: 'nhmesh',
+    area: 'United States',
+    label: 'NHMesh (New Hampshire)',
+    preset: '',
+    region: 'US',
+    channels: [PRIMARY_CHANNEL, secondary('NHMesh', 'NA==')],
+    notes: 'NHMesh doesn\'t publish its radio preset, so the device keeps its own.',
+  },
+  {
+    id: 'mountainmesh',
+    area: 'United States',
+    label: 'Mountain Mesh (Atlanta)',
+    preset: 'MediumFast',
+    region: 'US',
+    channels: [PRIMARY_CHANNEL],
+    notes: '',
+  },
+  {
+    id: 'baymesh',
+    area: 'United States',
+    label: 'BayMesh (SF Bay Area)',
+    preset: 'MediumFast',
+    region: 'US',
+    channels: [PRIMARY_CHANNEL],
+    notes: 'BayMesh\'s broker is mqtt.bayme.sh port 1883 (meshdev / large4cats, root topic msh/US/bayarea); set that on the device.',
+  },
+  {
+    id: 'socalmesh',
+    area: 'United States',
+    label: 'SoCal Mesh (Southern California)',
+    preset: 'LongTurbo',
+    region: 'US',
+    channels: [PRIMARY_CHANNEL],
+    notes: 'SoCal Mesh\'s broker is mqtt.socalmesh.org (meshdev / large4cats, root topic msh/US/CA/socalmesh); set that on the device.',
+  },
+  {
+    id: 'phillymesh',
+    area: 'United States',
+    label: 'PhillyMesh (Philadelphia)',
+    preset: 'LongTurbo',
+    region: 'US',
+    channels: [PRIMARY_CHANNEL],
+    notes: '',
+  },
+  {
+    id: 'denver',
+    area: 'United States',
+    label: 'Denver',
+    preset: 'MediumFast',
+    region: 'US',
+    channels: [PRIMARY_CHANNEL],
+    notes: 'Colorado Mesh uses the official broker with root topic msh/US/CO; set that on the device.',
+  },
+  {
+    id: 'mspmesh',
+    area: 'United States',
+    label: 'MSP Mesh (Twin Cities)',
+    preset: 'MediumFast',
+    region: 'US',
+    channels: [PRIMARY_CHANNEL],
+    notes: '',
+  },
+  {
+    id: 'mbug',
+    area: 'Americas and Asia-Pacific',
+    label: 'MBUG (Brisbane)',
+    preset: 'MediumFast',
+    region: 'ANZ',
+    channels: [
+      PRIMARY_CHANNEL,
+      secondary('Weather', 'default'),
+      secondary('POTA', '4l7IvHA1aIA+zCw0alSTCiGelsh30JqFHRxBEUFGIZ0='),
+      secondary('Meshergex', 'MQ=='),
+      secondary('Alert', 'none'),
+    ],
+    notes: 'MBUG publishes the Meshergex and Alert keys as MX== and AL==, which are the same keys as MQ== and none. Their broker is mqtt.mbug.com.au (mbug / small4dogs, root topic msh/ANZ); set that on the device.',
+  },
+  {
+    id: 'nz-shortfast',
+    area: 'Americas and Asia-Pacific',
+    label: 'Auckland, Waikato, Wellington (NZ)',
+    preset: 'ShortFast',
+    region: 'ANZ',
+    channels: [PRIMARY_CHANNEL],
+    notes: 'The rest of New Zealand runs Long Fast.',
+  },
+  {
+    id: 'mesharg',
+    area: 'Americas and Asia-Pacific',
+    label: 'MeshArg (Argentina)',
+    preset: '',
+    region: 'ANZ',
+    channels: [
+      PRIMARY_CHANNEL,
+      secondary('BairesMesh', 'aB3K7ZIciBKq49nxn5gVmPQEtbTUVZOHKxuCaCKaHtA='),
+      secondary('RosarioMesh', 'kss+4MMhc9unauU8i6bix0Lt/pkjWMv1PIFr0fH8g58='),
+      secondary('NQNmesh', 'B7jYDJLWy9TSnajWI/yAJETLBcjN2RNXUU4jS4eRyJo='),
+      secondary('CordobaMesh', 'CoRd0B4lHaBoN6OWT0u2EvNX9Jci7gsIiIJtD30BCCw='),
+      secondary('ERMesh', 'w9nTAUTYp2eFo7KyCfo5a42YSM4ewfrV/PSoxcjrAPI='),
+      secondary('MendozaMesh', 'yVyN1359YQb0S1LW2cslgMrXHbTkHnR1TSHYDa7VCCs='),
+    ],
+    notes: 'The radio preset differs by city, so the device keeps its own; BairesMesh runs Medium Fast. MeshArg asks for no MQTT on its networks.',
+  },
+  {
+    id: 'italia',
+    area: 'Europe',
+    label: 'Meshtastic Italia (Italy)',
+    preset: 'MediumFast',
+    region: 'EU_868',
+    channels: [
+      PRIMARY_CHANNEL,
+      secondary('Italia', 'mQ=='),
+      secondary('RRP', 'bFFpanZJWVkwZVFXaW1oTnhaT2U2bGYwb0l6Mkd4Szg='),
+      secondary('AllerteRRP', '1SFJZEJnA1ACu8DP0hps2jqZ9QOHp7ZEXKmqf6gcEGU='),
+    ],
+    notes: 'Medium Fast is the preset across Italy. RRP and AllerteRRP are a partner network\'s channels.',
+  },
+  {
+    id: 'meshhessen',
+    area: 'Europe',
+    label: 'Mesh Hessen (Germany)',
+    preset: 'ShortSlow',
+    region: 'EU_868',
+    channels: [PRIMARY_CHANNEL, secondary('Mesh Hessen', '+uTMEaOR7hkqaXv+DROOEd5BhvAIQY/CZ/Hr4soZcOU=')],
+    notes: 'Mesh Hessen\'s broker is mqtt.meshhessen.de (meshhessen / meshhessen, root topic msh/EU_868); set that on the device.',
+  },
+  {
+    id: 'berlin',
+    area: 'Europe',
+    label: 'Berlin Mesh (Berlin)',
+    preset: 'MediumFast',
+    region: 'EU_868',
+    channels: [PRIMARY_CHANNEL, secondary('TEST', 'default')],
+    notes: '',
+  },
+  {
+    id: 'portugal',
+    area: 'Europe',
+    label: 'Meshtastic Portugal',
+    preset: 'LongFast',
+    region: 'EU_868',
+    channels: [PRIMARY_CHANNEL, secondary('SOS', 'none'), secondary('Iberia', 'none')],
+    notes: 'SOS and Iberia are unencrypted. The community uses a hop limit of 4 and its own broker, mqtt.meshtastic.pt (meshdev / large4cats, root topic msh); set those on the device.',
+  },
+  {
+    id: 'finland',
+    area: 'Europe',
+    label: 'MeshAbout.fi (Finland)',
+    preset: 'LongFast',
+    region: 'EU_868',
+    channels: [PRIMARY_CHANNEL, secondary('Radio', 'none'), secondary('Radio&MQTT', 'MQ==', true)],
+    notes: 'Radio is unencrypted and stays on the radio; Radio&MQTT also goes to MQTT (root topic msh/EU_868/FI).',
+  },
+  {
+    id: 'hungary',
+    area: 'Europe',
+    label: 'Hungary (868 MHz)',
+    preset: 'MediumFast',
+    region: 'EU_868',
+    channels: [PRIMARY_CHANNEL, secondary('Hungary', 'default')],
+    notes: 'Hungary\'s 433 MHz network is on a frequency the flasher cannot set. The community broker is mqtt.creativo.hu (meshdev / large4cats, root topic msh/EU_868/HU).',
+  },
+  {
+    id: 'switzerland',
+    area: 'Europe',
+    label: 'Switzerland',
+    preset: 'MediumFast',
+    region: 'EU_868',
+    channels: [PRIMARY_CHANNEL],
+    notes: '',
+  },
+  {
+    id: 'stockholm',
+    area: 'Europe',
+    label: 'Stockholm',
+    preset: 'MediumFast',
+    region: 'EU_868',
+    channels: [PRIMARY_CHANNEL],
+    notes: 'Meshat.se\'s broker is mqtt.meshat.se (msh / msh, root topic msh/SE); set that on the device.',
+  },
+  {
+    id: 'warsaw',
+    area: 'Europe',
+    label: 'Warsaw',
+    preset: 'MediumFast',
+    region: 'EU_868',
+    channels: [PRIMARY_CHANNEL],
+    notes: '',
+  },
+  {
+    id: 'austria',
+    area: 'Europe',
+    label: 'Austria',
+    preset: 'LongFast',
+    region: 'EU_868',
+    channels: [PRIMARY_CHANNEL],
+    notes: '',
+  },
+  {
+    id: 'uk',
+    area: 'Europe',
+    label: 'United Kingdom',
+    preset: 'LongFast',
+    region: 'EU_868',
+    channels: [PRIMARY_CHANNEL],
+    notes: 'The UK uses the EU 868 MHz region; leave Override Duty Cycle off.',
+  },
 ]
+
+// The "Start from" list's groups, in order.
+export const PROFILE_AREAS = [...new Set(PROFILES.map(p => p.area))]
+
+// "MichMesh (Michigan)" -> "MichMesh".
+export function profileName(profile) {
+  return profile.label.replace(/\s*\(.*\)$/, '')
+}
+
+// What choosing a profile fills in, for the note under the list.
+export function profileFills(profile) {
+  const parts = [profile.preset && 'radio preset', 'channels', profile.logo && 'logo'].filter(Boolean)
+  return parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts.at(-1)}` : parts[0]
+}
 
 // On-device setup's questions. Mirrors kRegions in camillia-mt's
 // src/config_io.cpp and kOnboardRoles in src/main_lvgl.cpp.

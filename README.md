@@ -141,10 +141,14 @@ plain **Flash** never asks about customization. It can set:
   "1a2b"), so one set of choices suits any number of devices. The Wi-Fi
   password is never stored in the browser.
 
-**Start from** fills these in from a community setup: ChiMesh (Chicagoland) or
-MichMesh (Michigan), including the community's logo (rendered from its own SVG
-into `public/logos/`). Each profile lists the settings it recommends that the
-flasher cannot set yet, such as MQTT servers and the hop limit.
+**Start from** fills these in from a community setup: about 30 meshes in the
+US, the Americas and Asia-Pacific, and Europe, with their published radio
+preset, region and channel keys. ChiMesh and MichMesh also bring the
+community's logo (rendered from its own SVG into `public/logos/`). Each profile
+lists the settings it recommends that the flasher cannot set yet, such as MQTT
+servers and the hop limit. Only meshes on a stock preset at its default
+frequency slot are listed, because the flasher cannot pin a slot or a custom
+frequency.
 
 **Continue to flash** keeps the choices in `localStorage` and opens the
 installer. When that flash finishes the installer dialog closes itself and the
