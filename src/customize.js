@@ -8,11 +8,15 @@
 //   cfg set channel <i> role=.. name=<%-encoded> psk=default|none|<base64> pos=0|1 up=0|1 down=0|1
 //                           -> [cfg] ok channel <i> staged | [cfg] err channel ...
 //   cfg logo begin <bytes>, cfg logo data <hex>, cfg logo end <crc32>, cfg logo clear
-//   cfg commit              -> [cfg] ok committed ... applies-after=setup|rebooting|unchanged
+//   cfg set longname|shortname|ssid|wifipass <%-encoded>, cfg set region <code>,
+//   cfg set role <ROLE>     -> [cfg] ok <field> staged | [cfg] err <field>: ...
+//   cfg commit              -> [cfg] ok committed ... applies-after=setup|setup-done rebooting|rebooting|unchanged
 //   cfg abort               -> [cfg] ok aborted
 //
 // On a fresh install the device holds the settings until on-device setup
-// finishes; on an existing install, commit saves and reboots.
+// finishes, unless the setup answers (with a region) are sent too: then commit
+// finishes setup itself and reboots. On an existing install, commit saves and
+// reboots.
 
 import { withBase } from './basePath'
 
@@ -67,6 +71,7 @@ export const PROFILES = [
     label: 'ChiMesh (Chicagoland)',
     url: 'https://chicagolandmesh.org/guides/meshtastic/getting-started/configure/',
     preset: 'LongFast',
+    region: 'US',
     logo: withBase('/logos/chimesh.png'),
     channels: [PRIMARY_CHANNEL, secondary('Chicago', CHICAGO_PSK)],
     notes: 'ChiMesh also recommends hop limit 7, a 3-hour NodeInfo interval and MQTT via mqtt.chimesh.org (root topic msh/US/IL/Chi); set those on the device.',
@@ -76,6 +81,7 @@ export const PROFILES = [
     label: 'MichMesh (Michigan)',
     url: 'https://michmesh.net/docs/Meshtastic/Getting%20Started',
     preset: 'LongFast',
+    region: 'US',
     logo: withBase('/logos/michmesh.png'),
     channels: [
       PRIMARY_CHANNEL,
@@ -93,7 +99,59 @@ export const PROFILES = [
   },
 ]
 
-export const EMPTY_CUSTOMIZATION = { preset: '', channels: null, logo: '' }
+// On-device setup's questions. Mirrors kRegions in camillia-mt's
+// src/config_io.cpp and kOnboardRoles in src/main_lvgl.cpp.
+export const REGIONS = [
+  { code: 'US', label: 'United States (902–928 MHz)' },
+  { code: 'EU_868', label: 'Europe 868 MHz' },
+  { code: 'EU_433', label: 'Europe 433 MHz' },
+  { code: 'EU_866', label: 'Europe 866 MHz (Lite)' },
+  { code: 'EU_N_868', label: 'Europe 868 MHz (Narrow)' },
+  { code: 'ANZ', label: 'Australia / New Zealand 915 MHz' },
+  { code: 'ANZ_433', label: 'Australia / New Zealand 433 MHz' },
+  { code: 'NZ_865', label: 'New Zealand 865 MHz' },
+  { code: 'BR_902', label: 'Brazil 902 MHz' },
+  { code: 'CN', label: 'China 470 MHz' },
+  { code: 'IN', label: 'India 865 MHz' },
+  { code: 'JP', label: 'Japan 920 MHz' },
+  { code: 'KR', label: 'Korea 920 MHz' },
+  { code: 'KZ_433', label: 'Kazakhstan 433 MHz' },
+  { code: 'KZ_863', label: 'Kazakhstan 863 MHz' },
+  { code: 'MY_433', label: 'Malaysia 433 MHz' },
+  { code: 'MY_919', label: 'Malaysia 919 MHz' },
+  { code: 'NP_865', label: 'Nepal 865 MHz' },
+  { code: 'PH_433', label: 'Philippines 433 MHz' },
+  { code: 'PH_868', label: 'Philippines 868 MHz' },
+  { code: 'PH_915', label: 'Philippines 915 MHz' },
+  { code: 'RU', label: 'Russia 868 MHz' },
+  { code: 'SG_923', label: 'Singapore 923 MHz' },
+  { code: 'TH', label: 'Thailand 920 MHz' },
+  { code: 'TW', label: 'Taiwan 920 MHz' },
+  { code: 'UA_433', label: 'Ukraine 433 MHz' },
+  { code: 'UA_868', label: 'Ukraine 868 MHz' },
+  { code: 'LORA_24', label: '2.4 GHz (SX128x radios only)' },
+]
+
+export const ROLES = [
+  { name: 'CLIENT_MUTE', label: 'Client Mute', note: 'Sends and receives, but does not relay. Setup\'s default.' },
+  { name: 'CLIENT', label: 'Client', note: 'Sends, receives and relays for others.' },
+  { name: 'TRACKER', label: 'Tracker', note: 'Prioritises sending its position.' },
+  { name: 'CLIENT_HIDDEN', label: 'Client Hidden', note: 'Sends only what it must; stays out of node lists.' },
+]
+
+// Firmware limits: Meshtastic names are at most 24 (long) and 4 (short)
+// bytes; the Wi-Fi fields hold 63.
+export const LONG_NAME_MAX = 24
+export const SHORT_NAME_MAX = 4
+const WIFI_MAX = 63
+
+// Blank names: the device names itself from its node ID ("Camillia 1a2b").
+// The Wi-Fi password is never remembered in the browser.
+export function newSetup() {
+  return { longName: '', shortName: '', region: 'US', role: 'CLIENT_MUTE', wifiSsid: '', wifiPass: '' }
+}
+
+export const EMPTY_CUSTOMIZATION = { preset: '', channels: null, logo: '', setup: null }
 
 const STORAGE_KEY = 'camillia.customize'
 
@@ -119,6 +177,28 @@ export function channelError(channel, index) {
     return 'The key must be base64 of 1, 16 or 32 bytes.'
   }
   return ''
+}
+
+function utf8Bytes(text) {
+  return new TextEncoder().encode(text).length
+}
+
+// { field: why } for the setup fields that are not valid; {} when all are.
+export function setupErrors(setup) {
+  const out = {}
+  if (!setup) return out
+  if (utf8Bytes(setup.longName.trim()) > LONG_NAME_MAX) out.longName = `At most ${LONG_NAME_MAX} bytes.`
+  if (utf8Bytes(setup.shortName.trim()) > SHORT_NAME_MAX) out.shortName = `At most ${SHORT_NAME_MAX} bytes.`
+  if (!REGIONS.some(r => r.code === setup.region)) out.region = 'Pick a region.'
+  if (utf8Bytes(setup.wifiSsid) > WIFI_MAX) out.wifiSsid = `At most ${WIFI_MAX} bytes.`
+  if (setup.wifiSsid && setup.wifiPass && (setup.wifiPass.length < 8 || utf8Bytes(setup.wifiPass) > WIFI_MAX)) {
+    out.wifiPass = 'A WPA password is 8 to 63 characters; leave it empty for an open network.'
+  }
+  return out
+}
+
+export function customizationInvalid(settings) {
+  return customizationErrors(settings).some(Boolean) || Object.keys(setupErrors(settings?.setup)).length > 0
 }
 
 export function customizationErrors(settings) {
@@ -151,7 +231,17 @@ export function loadCustomization() {
       ? saved.channels.slice(0, MAX_CHANNELS).map(cleanChannel)
       : null
     const logo = saved?.logo === 'clear' || /^data:image\/png;base64,/.test(saved?.logo ?? '') ? saved.logo : ''
-    return { ...EMPTY_CUSTOMIZATION, preset, channels, logo }
+    const raw = saved?.setup
+    const setup = raw && typeof raw === 'object'
+      ? {
+          ...newSetup(),
+          ...Object.fromEntries(['longName', 'shortName', 'wifiSsid']
+            .filter(k => typeof raw[k] === 'string').map(k => [k, raw[k]])),
+          region: REGIONS.some(r => r.code === raw.region) ? raw.region : 'US',
+          role: ROLES.some(r => r.name === raw.role) ? raw.role : 'CLIENT_MUTE',
+        }
+      : null
+    return { ...EMPTY_CUSTOMIZATION, preset, channels, logo, setup }
   } catch {
     return { ...EMPTY_CUSTOMIZATION }
   }
@@ -160,7 +250,8 @@ export function loadCustomization() {
 // False when the browser would not keep it (a large logo can exceed the quota).
 export function saveCustomization(settings) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
+    const kept = settings.setup ? { ...settings, setup: { ...settings.setup, wifiPass: '' } } : settings
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(kept))
     return true
   } catch {
     return false
@@ -169,6 +260,7 @@ export function saveCustomization(settings) {
 
 export function customizationCount(settings) {
   return (settings?.preset ? 1 : 0) + (settings?.channels ? 1 : 0) + (settings?.logo ? 1 : 0)
+    + (settings?.setup ? 1 : 0)
 }
 
 export function presetLabel(name) {
@@ -202,7 +294,7 @@ export function parseCaps(line) {
 
 // Percent-encodes everything but plain ASCII, so a name survives a
 // space-separated line; the firmware decodes it byte for byte.
-export function encodeChannelName(name) {
+export function percentEncode(name) {
   return Array.from(new TextEncoder().encode(name), b =>
     /[A-Za-z0-9_.~-]/.test(String.fromCharCode(b)) ? String.fromCharCode(b) : `%${b.toString(16).toUpperCase().padStart(2, '0')}`
   ).join('')
@@ -211,7 +303,7 @@ export function encodeChannelName(name) {
 export function channelCommand(channel, index) {
   const role = index === 0 ? 'primary' : 'secondary'
   const psk = channel.psk === 'default' || channel.psk === 'none' ? channel.psk : channel.psk.trim()
-  return `cfg set channel ${index} role=${role} name=${encodeChannelName(channel.name.trim())} psk=${psk}`
+  return `cfg set channel ${index} role=${role} name=${percentEncode(channel.name.trim())} psk=${psk}`
     + ` pos=${channel.pos ? 1 : 0} up=${channel.up ? 1 : 0} down=${channel.down ? 1 : 0}`
 }
 
@@ -384,7 +476,7 @@ export async function applyCustomization(port, settings, log = () => {}) {
     const wants = key => {
       if (caps.keys.includes(key)) return
       throw new CustomizeError(
-        `This firmware cannot set the ${key === 'logo' ? 'boot logo' : key}. Flash a newer Camillia-MT release and try again.`
+        `This firmware cannot set the ${{ logo: 'boot logo', setup: 'setup answers' }[key] ?? key}. Flash a newer Camillia-MT release and try again.`
       )
     }
     const fail = reply => { throw new CustomizeError(reply.replace(/^\[cfg\] err\s*/, '')) }
@@ -416,7 +508,7 @@ export async function applyCustomization(port, settings, log = () => {}) {
 
     if (settings.logo === 'clear') {
       wants('logo')
-      log('Restoring the default boot title...')
+      log('Restoring the default boot flower...')
       const cleared = await command('cfg logo clear', line => /\[cfg\] (ok|err) logo/.test(line))
       if (cleared.startsWith('[cfg] err')) fail(cleared)
     } else if (settings.logo) {
@@ -435,12 +527,38 @@ export async function applyCustomization(port, settings, log = () => {}) {
       if (ended.startsWith('[cfg] err')) fail(ended)
     }
 
+    if (settings.setup) {
+      wants('setup')
+      const setup = settings.setup
+      const fields = [
+        ['region', setup.region],
+        ['role', setup.role],
+        ['longname', setup.longName.trim() && percentEncode(setup.longName.trim())],
+        ['shortname', setup.shortName.trim() && percentEncode(setup.shortName.trim())],
+        ['ssid', setup.wifiSsid && percentEncode(setup.wifiSsid)],
+      ]
+      log('Sending the setup answers...')
+      for (const [field, value] of fields) {
+        if (!value) continue
+        const set = await command(`cfg set ${field} ${value}`, line => new RegExp(`\\[cfg\\] (ok|err) ${field}`).test(line))
+        if (set.startsWith('[cfg] err')) fail(set)
+      }
+      if (setup.wifiSsid) {
+        // Sent even when empty, which is an open network: the trailing space
+        // is trimmed and the firmware reads the bare `cfg set wifipass` as ''.
+        const pass = await command(`cfg set wifipass ${percentEncode(setup.wifiPass)}`, line => /\[cfg\] (ok|err) wifipass/.test(line))
+        if (pass.startsWith('[cfg] err')) fail(pass)
+      }
+    }
+
     log('Saving on the device...')
     const commit = await command('cfg commit', line => /\[cfg\] (ok|err) (committed|nothing|commit)/.test(line))
     if (commit.startsWith('[cfg] err')) fail(commit)
     const outcome = /applies-after=setup/.test(commit)
       ? 'setup'
-      : /rebooting/.test(commit)
+      : /setup-done/.test(commit)
+        ? 'setup-done'
+        : /rebooting/.test(commit)
         ? 'rebooting'
         : 'unchanged'
     committed = true

@@ -133,9 +133,13 @@ optional pasting.
 plain **Flash** never asks about customization. It can set:
 
 - the radio preset;
-- a boot logo, shown on the splash card instead of the Camillia title;
+- a boot logo, shown on the splash card in place of the Camillia flower;
 - the channel list, which replaces every channel on the device. Each channel
-  has a name, a key, position sharing, and MQTT uplink and downlink.
+  has a name, a key, position sharing, and MQTT uplink and downlink;
+- the answers on-device setup asks for: long and short name, region, role and
+  Wi-Fi. Names left blank are made from the node ID ("Camillia 1a2b" /
+  "1a2b"), so one set of choices suits any number of devices. The Wi-Fi
+  password is never stored in the browser.
 
 **Start from** fills these in from a community setup: ChiMesh (Chicagoland) or
 MichMesh (Michigan), including the community's logo (rendered from its own SVG
@@ -152,14 +156,16 @@ camillia-mt's `cfg` CLI; see [`src/customize.js`](src/customize.js):
 - `cfg caps` reports what the device supports, its channel slots and the size of
   its logo area.
 - Changes are staged with `cfg set preset`, `cfg channels clear` + `cfg set
-  channel`, and `cfg logo begin`/`data`/`end`. The logo is sent as hex chunks
+  channel`, `cfg logo begin`/`data`/`end`, and `cfg set region`/`role`/
+  `longname`/`shortname`/`ssid`/`wifipass`. The logo is sent as hex chunks
   with a CRC-32 check.
 - `cfg commit` writes everything at once.
 
 The logo is resized to the device's logo area, drawn over the card colour and
-shrunk until it fits the 8 KB limit in NVS. On a fresh install the device holds
-the settings until on-device setup completes; on an existing install it saves
-them and reboots. Firmware without the `cfg` commands, or without a feature, is
+shrunk until it fits the 8 KB limit in NVS. On a fresh install with the setup
+answers, commit finishes setup on the device and reboots it ready to use;
+without them the device holds the settings until on-device setup completes. On
+an existing install it saves them and reboots. Firmware without the `cfg` commands, or without a feature, is
 detected and reported.
 
 ## Updating the firmware version

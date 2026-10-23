@@ -1,19 +1,26 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   CHANNEL_NAME_MAX,
+  LONG_NAME_MAX,
   MAX_CHANNELS,
   PROFILES,
   RADIO_PRESETS,
+  REGIONS,
+  ROLES,
+  SHORT_NAME_MAX,
   SPLASH_CARD_BG,
   CustomizeError,
   applyCustomization,
   customizationCount,
   customizationErrors,
+  customizationInvalid,
   loadCustomization,
   newChannel,
+  newSetup,
   prepareLogoSource,
   randomPsk,
   saveCustomization,
+  setupErrors,
 } from '../customize.js'
 
 const FOCUSABLE = 'a[href], button:not([disabled]), select:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
@@ -93,6 +100,85 @@ function ChannelRow({ channel, index, error, disabled, onChange, onRemove }) {
       </div>
       {error && <p className="customize-error">{error}</p>}
     </li>
+  )
+}
+
+function SetupFields({ setup, errors, onChange }) {
+  const set = patch => onChange({ ...setup, ...patch })
+  const role = ROLES.find(r => r.name === setup.role)
+  return (
+    <>
+      <div className="customize-channel-fields">
+        <label className="customize-input">
+          <span>Long name</span>
+          <input
+            type="text"
+            value={setup.longName}
+            maxLength={LONG_NAME_MAX}
+            placeholder="From node ID: Camillia 1a2b"
+            onChange={event => set({ longName: event.target.value })}
+            aria-invalid={Boolean(errors.longName) || undefined}
+          />
+        </label>
+        <label className="customize-input">
+          <span>Short name</span>
+          <input
+            type="text"
+            value={setup.shortName}
+            maxLength={SHORT_NAME_MAX}
+            placeholder="From node ID: 1a2b"
+            onChange={event => set({ shortName: event.target.value })}
+            aria-invalid={Boolean(errors.shortName) || undefined}
+          />
+        </label>
+      </div>
+      <div className="customize-channel-fields">
+        <label className="customize-input">
+          <span>Region</span>
+          <select value={setup.region} onChange={event => set({ region: event.target.value })}>
+            {REGIONS.map(r => <option key={r.code} value={r.code}>{r.label}</option>)}
+          </select>
+        </label>
+        <label className="customize-input">
+          <span>Role</span>
+          <select value={setup.role} onChange={event => set({ role: event.target.value })}>
+            {ROLES.map(r => <option key={r.name} value={r.name}>{r.label}</option>)}
+          </select>
+        </label>
+      </div>
+      {role && <p className="browser-note customize-note">{role.note}</p>}
+      <div className="customize-channel-fields">
+        <label className="customize-input">
+          <span>Wi-Fi network (optional)</span>
+          <input
+            type="text"
+            value={setup.wifiSsid}
+            autoComplete="off"
+            spellCheck={false}
+            onChange={event => set({ wifiSsid: event.target.value })}
+            aria-invalid={Boolean(errors.wifiSsid) || undefined}
+          />
+        </label>
+        <label className="customize-input">
+          <span>Wi-Fi password</span>
+          <input
+            type="password"
+            value={setup.wifiPass}
+            autoComplete="new-password"
+            disabled={!setup.wifiSsid}
+            placeholder={setup.wifiSsid ? 'Empty for an open network' : ''}
+            onChange={event => set({ wifiPass: event.target.value })}
+            aria-invalid={Boolean(errors.wifiPass) || undefined}
+          />
+        </label>
+      </div>
+      {Object.values(errors).map(error => <p key={error} className="customize-error">{error}</p>)}
+      <p className="browser-note customize-note">
+        Blank names make each device name itself from its node ID, so one set of
+        choices can flash many devices. The Wi-Fi password is not remembered in
+        this browser; enter it again on each visit.
+      </p>
+    </>
   )
 }
 
@@ -179,7 +265,8 @@ export default function Customize({ supported, canFlash = false, onFlash, flashe
   const applying = phase === 'applying'
   const draftCount = customizationCount(draft)
   const errors = customizationErrors(draft)
-  const invalid = errors.some(Boolean)
+  const draftSetupErrors = setupErrors(draft.setup)
+  const invalid = customizationInvalid(draft)
   const profile = PROFILES.find(p => p.id === profileId)
 
   function openModal(event) {
@@ -211,6 +298,7 @@ export default function Customize({ supported, canFlash = false, onFlash, flashe
     const request = ++logoRequestRef.current
     setDraft(d => ({
       ...d,
+      setup: d.setup && chosen.region ? { ...d.setup, region: chosen.region } : d.setup,
       preset: chosen.preset,
       channels: chosen.channels.map(c => ({ ...c })),
     }))
@@ -267,7 +355,7 @@ export default function Customize({ supported, canFlash = false, onFlash, flashe
   async function apply({ retry = false } = {}) {
     if (applyingRef.current) return
     const chosen = settings
-    if (!customizationCount(chosen) || customizationErrors(chosen).some(Boolean)) return
+    if (!customizationCount(chosen) || customizationInvalid(chosen)) return
     applyingRef.current = true
     setPhase('applying')
     setStatus('Firmware installed. Connecting to the device to apply your settings...')
@@ -283,7 +371,9 @@ export default function Customize({ supported, canFlash = false, onFlash, flashe
       })
       if (!mountedRef.current) return
       setPhase('ready')
-      setStatus(result.outcome === 'setup'
+      setStatus(result.outcome === 'setup-done'
+        ? 'Customization saved and setup finished. The device is rebooting, ready to use.'
+        : result.outcome === 'setup'
         ? 'Customization saved. Finish setup on the device; your choices take effect when it completes.'
         : result.outcome === 'rebooting'
           ? 'Customization saved. The device is rebooting with your choices.'
@@ -418,10 +508,11 @@ export default function Customize({ supported, canFlash = false, onFlash, flashe
             </div>
 
             <p className="debug-report-privacy">
-              Choose settings to send to the device over USB after flashing. On a
-              fresh install they are held until you finish setup on the device;
-              on an existing install the device saves them and reboots. Your
-              choices are remembered in this browser.
+              Choose settings to send to the device over USB after flashing. With
+              Device setup filled in, a fresh install skips on-device setup;
+              otherwise your choices are held until you finish setup on the
+              device. An existing install saves them and reboots. Your choices
+              are remembered in this browser.
             </p>
 
             <label className="flasher-select customize-field">
@@ -441,6 +532,32 @@ export default function Customize({ supported, canFlash = false, onFlash, flashe
                 Fills in the radio preset, channels and logo <a href={profile.url} target="_blank" rel="noreferrer">{profile.label.split(' ')[0]}</a> publishes. {profile.notes}
               </p>
             )}
+
+            <fieldset className="customize-section">
+              <legend>Device setup</legend>
+              <label className="customize-check">
+                <input
+                  type="checkbox"
+                  checked={Boolean(draft.setup)}
+                  onChange={event => setDraft(d => ({
+                    ...d,
+                    setup: event.target.checked ? { ...newSetup(), region: profile?.region ?? 'US' } : null,
+                  }))}
+                />
+                Answer setup's questions here
+              </label>
+              {draft.setup ? (
+                <SetupFields
+                  setup={draft.setup}
+                  errors={draftSetupErrors}
+                  onChange={setup => setDraft(d => ({ ...d, setup }))}
+                />
+              ) : (
+                <p className="browser-note customize-note">
+                  A fresh install asks for its name, region, role and Wi-Fi on the device.
+                </p>
+              )}
+            </fieldset>
 
             <label className="flasher-select customize-field">
               <span>Radio preset</span>
@@ -468,7 +585,7 @@ export default function Customize({ supported, canFlash = false, onFlash, flashe
                 <div className="customize-logo-preview" style={{ background: SPLASH_CARD_BG }}>
                   {draft.logo && draft.logo !== 'clear'
                     ? <img src={draft.logo} alt="Chosen boot logo" />
-                    : <span>{draft.logo === 'clear' ? 'Camillia (default title)' : 'No change'}</span>}
+                    : <span>{draft.logo === 'clear' ? 'Camillia flower (default)' : 'No change'}</span>}
                 </div>
                 <div className="customize-logo-actions">
                   <label className="flasher-row-btn customize-file">
@@ -481,7 +598,7 @@ export default function Customize({ supported, canFlash = false, onFlash, flashe
                     onClick={() => setLogo('clear')}
                     disabled={draft.logo === 'clear'}
                   >
-                    Restore default title
+                    Restore default flower
                   </button>
                   {draft.logo && (
                     <button
@@ -495,9 +612,9 @@ export default function Customize({ supported, canFlash = false, onFlash, flashe
                 </div>
               </div>
               <p className="browser-note customize-note">
-                Shown on the boot screen in place of the Camillia title. It is scaled to
-                fit each device (about 300×60 on most) and drawn on the card colour, so a
-                wide logo on a transparent background works best.
+                Shown on the boot screen in place of the Camillia flower. It is scaled to
+                fit each device (about 280×90 on most) and drawn on the card colour, so a
+                logo on a transparent background works best.
               </p>
               {logoError && <p className="customize-error">{logoError}</p>}
             </fieldset>
@@ -566,7 +683,7 @@ export default function Customize({ supported, canFlash = false, onFlash, flashe
               <p className="browser-note">Pick at least one setting.</p>
             )}
             {invalid && (
-              <p className="browser-note">Fix the highlighted channels first.</p>
+              <p className="browser-note">Fix the highlighted fields first.</p>
             )}
             {draftCount > 0 && (
               <p className="browser-note">
