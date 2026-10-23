@@ -53,11 +53,13 @@ export const CHANNEL_NAME_MAX = 11
 export const SPLASH_CARD_BG = '#100C29'
 
 // A channel: psk is 'default' (AQ==), 'none', or a base64 key of 1, 16 or 32
-// bytes. An empty primary name means "named after the preset".
-const PRIMARY_CHANNEL = { name: '', psk: 'default', pos: true, up: true, down: false }
+// bytes. An empty primary name means "named after the preset". Position and
+// MQTT are off unless a community's own page asks for them.
+const PRIMARY_CHANNEL = { name: '', psk: 'default', pos: false, up: false, down: false }
+const primary = flags => ({ ...PRIMARY_CHANNEL, ...flags })
 const secondary = (name, psk, mqtt = false) => ({ name, psk, pos: false, up: mqtt, down: mqtt })
 // A primary channel with its own name and key, as Freq51's.
-const namedPrimary = (name, psk) => ({ ...PRIMARY_CHANNEL, name, psk })
+const namedPrimary = (name, psk, flags) => ({ ...PRIMARY_CHANNEL, name, psk, ...flags })
 const CHICAGO_PSK = 'H1HDyEqg5W9XFilicVTIaoWYrs8URmWGo5fAYfbxQgo='
 
 export function newChannel(index) {
@@ -82,7 +84,7 @@ export const PROFILES = [
     preset: 'LongFast',
     region: 'US',
     logo: withBase('/logos/chimesh.png'),
-    channels: [PRIMARY_CHANNEL, secondary('Chicago', CHICAGO_PSK)],
+    channels: [primary({ pos: true, up: true }), secondary('Chicago', CHICAGO_PSK)],
     notes: 'ChiMesh also recommends hop limit 7, a 3-hour NodeInfo interval and MQTT via mqtt.chimesh.org (root topic msh/US/IL/Chi); set those on the device.',
   },
   {
@@ -95,17 +97,17 @@ export const PROFILES = [
     logo: withBase('/logos/michmesh.png'),
     channels: [
       PRIMARY_CHANNEL,
-      secondary('Michigan', 'MA=='),
-      secondary('WMI', 'MA=='),
-      secondary('EMI', 'MA=='),
-      secondary('Muskegon', 'MA=='),
-      secondary('NMI', 'MA=='),
-      secondary('YOOPER', 'MA=='),
-      secondary('Washtenaw', 'MA=='),
+      secondary('Michigan', 'MA==', true),
+      secondary('WMI', 'MA==', true),
+      secondary('EMI', 'MA==', true),
+      secondary('Muskegon', 'MA==', true),
+      secondary('NMI', 'MA==', true),
+      secondary('YOOPER', 'MA==', true),
+      secondary('Washtenaw', 'MA==', true),
       secondary('W8ZHO', 'none'),
       secondary('Chicago', CHICAGO_PSK),
     ],
-    notes: 'W8ZHO and Chicago come from Muskegon Mesh. Ten channels need a device with ten slots (the Cardputer has eight). MichMesh also recommends "OK to MQTT" with root topic msh/US/MI; set that on the device.',
+    notes: 'W8ZHO and Chicago come from Muskegon Mesh. Ten channels need a device with ten slots (the Cardputer has eight). MichMesh suggests turning on position and uplink on the primary channel if you want to appear on its maps, and "OK to MQTT" with root topic msh/US/MI; set those on the device.',
   },
   {
     id: 'iowamesh',
@@ -191,7 +193,7 @@ export const PROFILES = [
     url: 'https://nwimesh.net/local-encrypted-channel',
     preset: 'LongFast',
     region: 'US',
-    channels: [PRIMARY_CHANNEL, { ...secondary('Testing', 'default'), up: true }, secondary('NWI', CHICAGO_PSK)],
+    channels: [primary({ up: true }), { ...secondary('Testing', 'default'), up: true }, secondary('NWI', CHICAGO_PSK)],
     notes: 'NWI shares its key with ChiMesh\'s Chicago channel. It recommends hop limit 7 and its broker, mqtt.nwimesh.net (meshdev / large4cats, root topic msh/US/IN/NWI); set those on the device.',
   },
   {
@@ -223,7 +225,7 @@ export const PROFILES = [
     slot: 51,
     region: 'US',
     channels: [
-      namedPrimary('Freq51', '1A=='),
+      namedPrimary('Freq51', '1A==', { up: true }),
       secondary('MediumFast', 'default'),
       secondary('DC801', 'MHHa9wlKe4chJ01SuTKt1RnqbSXv4UJNAP+ONcKfa0c='),
       secondary('SAINTCON', 'dFa5cC4GuZ9AnFgPKzBjzqO6Ch8doQdOMqzwlmEff0Q='),
@@ -465,10 +467,15 @@ export const PROFILES = [
     id: 'finland',
     area: 'Europe',
     label: 'MeshAbout.fi (Finland)',
+    url: 'https://www.meshabout.fi/kanavat/',
     preset: 'LongFast',
     region: 'EU_868',
-    channels: [PRIMARY_CHANNEL, secondary('Radio', 'none'), secondary('Radio&MQTT', 'MQ==', true)],
-    notes: 'Radio is unencrypted and stays on the radio; Radio&MQTT also goes to MQTT (root topic msh/EU_868/FI).',
+    channels: [
+      primary({ pos: true, up: true, down: true }),
+      { ...secondary('Radio', 'none'), pos: true },
+      { ...secondary('Radio&MQTT', 'MQ==', true), pos: true },
+    ],
+    notes: 'Radio is unencrypted and stays on the radio; Radio&MQTT also goes to MQTT (root topic msh/EU_868/FI). MeshAbout.fi asks for precise position on LongFast and Radio, and 364 m precision on Radio&MQTT; set the precision on the device.',
   },
   {
     id: 'hungary',
