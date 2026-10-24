@@ -255,6 +255,7 @@ export default function Customize({ supported, canFlash = false, onFlash, flashe
   const [status, setStatus] = useState('')
   const [profileId, setProfileId] = useState('')
   const [logoError, setLogoError] = useState('')
+  const [allFlags, setAllFlags] = useState({ pos: false, up: false, down: false })
 
   const panelRef = useRef(null)
   const closeRef = useRef(null)
@@ -674,6 +675,21 @@ export default function Customize({ supported, canFlash = false, onFlash, flashe
               </label>
               {draft.channels ? (
                 <>
+                  <div className="customize-channel customize-channel-all">
+                    <span className="customize-channel-slot">All channels</span>
+                    <div className="customize-channel-flags">
+                      <label><input type="checkbox" checked={allFlags.pos} onChange={event => setAllFlags(f => ({ ...f, pos: event.target.checked }))} /> Share position</label>
+                      <label><input type="checkbox" checked={allFlags.up} onChange={event => setAllFlags(f => ({ ...f, up: event.target.checked }))} /> MQTT uplink</label>
+                      <label><input type="checkbox" checked={allFlags.down} onChange={event => setAllFlags(f => ({ ...f, down: event.target.checked }))} /> MQTT downlink</label>
+                    </div>
+                    <button
+                      type="button"
+                      className="flasher-row-btn"
+                      onClick={() => setChannels(list => list.map(c => ({ ...c, ...allFlags })))}
+                    >
+                      Apply to all channels
+                    </button>
+                  </div>
                   <ol className="customize-channels">
                     {draft.channels.map((channel, index) => (
                       <ChannelRow

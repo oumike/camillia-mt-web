@@ -1127,6 +1127,7 @@ section[id]:focus { outline: none; }
   border: 1px solid var(--divider);
   border-radius: 9px;
 }
+.customize-channel-all .flasher-row-btn { align-self: flex-start; }
 .customize-channel-head { display: flex; justify-content: space-between; align-items: center; }
 .customize-channel-slot {
   font-family: var(--font-mono);
