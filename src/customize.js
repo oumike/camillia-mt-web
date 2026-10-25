@@ -91,8 +91,8 @@ export const PROFILES = [
     region: 'US',
     logo: withBase('/logos/chimesh.png'),
     channels: [primary({ pos: true, up: true }), secondary('Chicago', CHICAGO_PSK)],
-    mqtt: { host: 'mqtt.chimesh.org', root: 'msh/US/IL/Chi' },
-    notes: 'ChiMesh also recommends hop limit 7 and a 3-hour NodeInfo interval; set those on the device. Its broker publishes no login, so none is set.',
+    mqtt: { host: 'mqtt.chimesh.org', user: 'meshdev', pass: 'large4cats', root: 'msh/US/IL/Chi' },
+    notes: 'ChiMesh also recommends hop limit 7 and a 3-hour NodeInfo interval; set those on the device.',
   },
   {
     id: 'michmesh',
