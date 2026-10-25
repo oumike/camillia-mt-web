@@ -2,8 +2,8 @@
    Camillia for Meshtastic — site styles.
 
    The visual system borrows the firmware's own vocabulary: rounded panels on a
-   near-black ground, a pill status bar, monospace data, and the bracketed key
-   legend. Every color comes from --* custom properties written by themes.js,
+   dark ground, Martian Mono for headings and anything the device itself prints
+   (build names, the bracketed key legend), and plain sans for everything else. Every color comes from --* custom properties written by themes.js,
    which derives them from the same anchors the device blends at boot.
    =========================================================================== */
 
@@ -16,10 +16,13 @@
 
   --radius-panel: 12px;
   --radius-screen: 16px;
+  /* Buttons and toggles: the same soft rectangle the firmware draws its
+     message bubbles and config rows with, not a pill. */
+  --radius-control: 6px;
 
   --font-display: 'Martian Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   --font-body: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
   /* Side gutters. viewport-fit=cover lets the page run under the notch and
      home indicator of a landscape iPhone, so the gutter grows to clear them. */
@@ -129,16 +132,6 @@ p:last-child { margin-bottom: 0; }
 
 .measure { max-width: var(--measure); }
 
-.eyebrow {
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.2em;
-  color: var(--accent);
-  margin: 0 0 0.9em;
-}
-
 /* --- Layout -------------------------------------------------------------- */
 
 .container {
@@ -174,19 +167,6 @@ section[id]:focus { outline: none; }
 }
 .band .panel { background: var(--bg-main); }
 
-.tag {
-  display: inline-block;
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  padding: 3px 9px;
-  border-radius: 999px;
-  background: var(--select-bg);
-  color: var(--accent);
-  margin-bottom: 14px;
-}
-
 .notice {
   margin-top: 24px;
   border-color: var(--accent);
@@ -200,11 +180,11 @@ section[id]:focus { outline: none; }
   align-items: center;
   gap: 8px;
   padding: 11px 20px;
-  border-radius: 999px;
+  border-radius: var(--radius-control);
   background: var(--accent);
   color: var(--text-on-accent);
   border: 1px solid var(--accent);
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 0.88rem;
   font-weight: 500;
   letter-spacing: -0.01em;
@@ -224,15 +204,15 @@ section[id]:focus { outline: none; }
 .mode-toggle {
   display: inline-flex;
   border: 1px solid var(--divider-hi);
-  border-radius: 999px;
+  border-radius: var(--radius-control);
   padding: 3px;
   gap: 2px;
   background: var(--panel-bg);
 }
 .mode-toggle button {
   padding: 6px 14px;
-  border-radius: 999px;
-  font-family: var(--font-mono);
+  border-radius: var(--radius-control);
+  font-family: var(--font-body);
   font-size: 0.78rem;
   color: var(--text-dim);
 }
@@ -290,7 +270,7 @@ section[id]:focus { outline: none; }
 }
 .nav-links a {
   display: inline-block;
-  font-family: var(--font-mono);
+  font-family: var(--font-display);
   font-size: 0.8rem;
   padding: 6px 9px;
   border-radius: 7px;
@@ -367,8 +347,6 @@ section[id]:focus { outline: none; }
 .hero {
   padding-top: clamp(44px, 6vw, 76px);
   padding-bottom: clamp(48px, 6vw, 76px);
-  background:
-    radial-gradient(120% 70% at 80% -10%, var(--panel-strong) 0%, transparent 62%);
 }
 
 .hero-inner {
@@ -392,14 +370,6 @@ section[id]:focus { outline: none; }
   margin-top: 30px;
 }
 
-.hero-spec {
-  margin: 22px 0 0;
-  font-family: var(--font-mono);
-  font-size: 0.76rem;
-  letter-spacing: 0.06em;
-  color: var(--text-dim);
-}
-
 /* An actual capture off the hardware, in a bezel. The panel is sized by the
    image's own 4:3 and kept pixel-doubled rather than smoothed, so it reads as
    a 320x240 LCD instead of a blurry upscale. */
@@ -414,17 +384,12 @@ section[id]:focus { outline: none; }
   border: 1px solid var(--divider-hi);
   image-rendering: pixelated;
   background: #000;
-  box-shadow:
-    0 0 0 6px color-mix(in srgb, var(--panel-alt) 55%, transparent),
-    0 24px 60px -24px rgb(0 0 0 / 0.55);
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--panel-alt) 55%, transparent);
 }
 .hero-screen figcaption {
-  margin: 22px 0 0;
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.04em;
+  margin: 18px 0 0;
+  font-size: 0.85rem;
   color: var(--text-dim);
-  text-align: center;
 }
 
 /* The chat server has no capture to show, so its hero draws the OLED status
@@ -444,9 +409,7 @@ section[id]:focus { outline: none; }
   line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
-  box-shadow:
-    0 0 0 6px color-mix(in srgb, var(--panel-alt) 55%, transparent),
-    0 24px 60px -24px rgb(0 0 0 / 0.55);
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--panel-alt) 55%, transparent);
 }
 .oled span:first-child { font-weight: 500; }
 
@@ -463,69 +426,90 @@ section[id]:focus { outline: none; }
 @media (max-height: 500px) and (orientation: landscape) {
   .hero { padding-top: 28px; padding-bottom: 40px; }
   .hero-actions { margin-top: 20px; }
-  .hero-spec { margin-top: 16px; }
   .hero-screen img { max-height: calc(100dvh - var(--nav-h) - 96px); width: auto; margin: 0 auto; }
   .hero-screen figcaption { margin-top: 14px; }
 }
 
 /* --- Features ------------------------------------------------------------ */
 
-.feature-grid { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
-.feature-grid h3 { color: var(--text-main); }
-.feature-grid p { margin: 0; font-size: 0.94rem; }
+/* Plain text in two columns: the features are prose, so they read as prose
+   rather than as a wall of identical boxes. */
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 36px clamp(32px, 6vw, 80px);
+  margin-top: 44px;
+}
+.feature h3 { color: var(--text-main); margin-bottom: 8px; }
+.feature p { margin: 0; max-width: 54ch; }
+
+@media (max-width: 720px) {
+  .feature-grid { grid-template-columns: 1fr; gap: 28px; }
+}
 
 /* --- Devices ------------------------------------------------------------- */
 
-.device-grid { grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); }
+/* A spec list, one board per row, ruled the way the firmware rules its own
+   node and config lists. Columns line up so boards compare at a glance. */
+.device-list {
+  list-style: none;
+  margin: 40px 0 0;
+  padding: 0;
+  border-bottom: 1px solid var(--divider);
+}
 
-/* Cards stretch to the tallest in the row, so pin the chip rule to the bottom
-   rather than leaving a ragged gap under each description. */
-.device { display: flex; flex-direction: column; }
+.device {
+  display: grid;
+  grid-template-columns: minmax(0, 17rem) minmax(0, 1fr) 10rem;
+  gap: 6px 32px;
+  align-items: baseline;
+  padding: 18px 0;
+  border-top: 1px solid var(--divider);
+}
 
-/* Board names wrap to two lines at some widths, so the build env always sits
-   on its own line rather than sometimes trailing the title and sometimes not. */
-.device-head { margin-bottom: 14px; }
-.device-head h3 { margin: 0 0 5px; }
+.device-head h3 { margin: 0 0 4px; font-size: 0.95rem; }
 .device-head a { color: var(--text-main); }
 .device-head a:hover { color: var(--accent); }
 
 .device-env {
-  font-family: var(--font-mono);
+  font-family: var(--font-display);
   font-size: 0.72rem;
   color: var(--accent);
 }
 
-.device p { margin: 0; font-size: 0.92rem; }
+.device-desc { margin: 0; font-size: 0.94rem; }
 
 .device-foot {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-top: auto !important;
-  padding-top: 14px;
-  border-top: 1px solid var(--divider);
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  margin: 0;
+  font-size: 0.85rem;
+  text-align: right;
 }
-.device-chip { letter-spacing: 0.08em; color: var(--text-dim); }
-.device-buy { color: var(--accent); white-space: nowrap; }
+.device-chip { color: var(--text-dim); }
+.device-buy { color: var(--accent); }
+
+@media (max-width: 860px) {
+  .device { grid-template-columns: 1fr; }
+  .device-foot { flex-direction: row; flex-wrap: wrap; justify-content: space-between; text-align: left; margin-top: 6px; }
+}
 
 /* --- Screenshots --------------------------------------------------------- */
 
 .shots-lead {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 22px;
+  gap: 32px 24px;
   margin-top: 40px;
 }
 
 .shots-rest {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 16px;
-  margin-top: 16px;
+  gap: 28px 20px;
+  margin-top: 40px;
 }
 
 .shot {
@@ -533,10 +517,6 @@ section[id]:focus { outline: none; }
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 14px;
-  border: 1px solid var(--divider);
-  border-radius: var(--radius-panel);
-  background: var(--panel-bg);
 }
 
 .shot-open {
@@ -560,23 +540,22 @@ section[id]:focus { outline: none; }
 .shot figcaption {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 .shot figcaption strong {
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-  font-weight: 500;
+  font-size: 0.92rem;
+  font-weight: 600;
   color: var(--text-main);
 }
 .shot figcaption span {
-  font-size: 0.85rem;
-  line-height: 1.45;
+  font-size: 0.88rem;
+  line-height: 1.5;
   color: var(--text-dim);
 }
 
-.shot-rest { padding: 10px; gap: 9px; }
-.shot-rest figcaption strong { font-size: 0.74rem; }
-.shot-rest figcaption span { font-size: 0.78rem; }
+.shot-rest { gap: 9px; }
+.shot-rest figcaption strong { font-size: 0.85rem; }
+.shot-rest figcaption span { font-size: 0.8rem; }
 
 .shot-lightbox {
   position: fixed;
@@ -616,11 +595,11 @@ section[id]:focus { outline: none; }
   align-self: flex-end;
   margin-bottom: 12px;
   padding: 7px 14px;
-  border-radius: 999px;
+  border-radius: var(--radius-control);
   border: 1px solid var(--divider-hi);
   background: var(--panel-alt);
   color: var(--text-main);
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 0.78rem;
 }
 
@@ -631,7 +610,7 @@ section[id]:focus { outline: none; }
   margin-top: 12px;
 }
 .shot-lightbox-caption strong {
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 0.82rem;
   font-weight: 500;
   color: var(--text-main);
@@ -650,7 +629,7 @@ section[id]:focus { outline: none; }
 
 .rail-note {
   margin: 0;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 0.72rem;
   color: var(--text-dim);
 }
@@ -681,7 +660,7 @@ section[id]:focus { outline: none; }
 }
 
 .rail-name {
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 0.7rem;
   letter-spacing: -0.01em;
   color: var(--text-dim);
@@ -774,10 +753,8 @@ section[id]:focus { outline: none; }
   max-width: 420px;
 }
 .flasher-select span {
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
   color: var(--text-dim);
 }
 .flasher-select select {
@@ -818,7 +795,7 @@ section[id]:focus { outline: none; }
   border-radius: 9px;
   background: var(--panel-alt);
   color: var(--text-main);
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 0.78rem;
   padding: 0 11px;
   white-space: nowrap;
@@ -867,7 +844,7 @@ section[id]:focus { outline: none; }
 }
 
 .flasher-notes-modal-head strong {
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 0.88rem;
   color: var(--text-main);
 }
@@ -879,16 +856,16 @@ section[id]:focus { outline: none; }
 }
 
 .flasher-notes-modal-actions a {
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 0.76rem;
 }
 
 .flasher-notes-modal-close {
   border: 1px solid var(--divider-hi);
-  border-radius: 999px;
+  border-radius: var(--radius-control);
   background: var(--panel-alt);
   color: var(--text-main);
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 0.78rem;
   padding: 7px 14px;
 }
@@ -942,16 +919,15 @@ section[id]:focus { outline: none; }
   gap: 20px;
 }
 
-.debug-report-head .eyebrow { margin-bottom: 5px; }
 .debug-report-head h3 { margin: 0; font-size: 1.15rem; }
 
 .debug-report-close {
   flex: 0 0 auto;
   border: 1px solid var(--divider-hi);
-  border-radius: 999px;
+  border-radius: var(--radius-control);
   background: var(--panel-alt);
   color: var(--text-main);
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 0.78rem;
   padding: 7px 14px;
 }
@@ -975,7 +951,7 @@ section[id]:focus { outline: none; }
 
 .debug-report-status strong {
   color: var(--text-main);
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 0.78rem;
 }
 
@@ -1009,10 +985,8 @@ section[id]:focus { outline: none; }
 
 .debug-report-field > span {
   color: var(--text-dim);
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 0.7rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
 }
 
 .debug-report-field textarea {
@@ -1078,10 +1052,8 @@ section[id]:focus { outline: none; }
 }
 .customize-section legend {
   padding: 0 6px;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
   color: var(--text-dim);
 }
 .customize-section .customize-note { margin-top: 0; }
@@ -1130,10 +1102,8 @@ section[id]:focus { outline: none; }
 .customize-channel-all .flasher-row-btn { align-self: flex-start; }
 .customize-channel-head { display: flex; justify-content: space-between; align-items: center; }
 .customize-channel-slot {
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
   color: var(--text-dim);
 }
 .customize-channel-fields { display: flex; flex-wrap: wrap; gap: 10px; }
@@ -1223,10 +1193,11 @@ section[id]:focus { outline: none; }
 .steps p { margin: 0; font-size: 0.94rem; }
 
 .step-n {
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.12;
   color: var(--accent);
-  padding-top: 3px;
 }
 
 /* --- Footer -------------------------------------------------------------- */
@@ -1246,7 +1217,7 @@ footer {
 .footer-inner p { margin: 0; }
 
 .footer-mark {
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 0.8rem;
   color: var(--text-main);
 }
@@ -1256,7 +1227,7 @@ footer {
   flex-wrap: wrap;
   gap: 12px;
   margin-left: auto !important;
-  font-family: var(--font-mono);
+  font-family: var(--font-display);
   font-size: 0.72rem;
 }
 .footer-keys b { color: var(--accent); font-weight: 500; }
@@ -1264,7 +1235,7 @@ footer {
 .footer-links {
   display: flex;
   gap: 16px;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 0.76rem;
 }
 
@@ -1277,7 +1248,7 @@ footer {
 /* The fallback while the script loads, or if it never does. Matches the links
    beside it rather than pretending to be the button. */
 .footer-bmc-link {
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 0.76rem;
   color: var(--accent);
 }

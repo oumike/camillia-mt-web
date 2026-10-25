@@ -2,7 +2,6 @@ export default function AI() {
   return (
     <section id="ai">
       <div className="container">
-        <p className="eyebrow">Colophon</p>
         <h2>Built in my spare time, with an AI partner</h2>
         <div className="measure">
           <p>

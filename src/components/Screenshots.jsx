@@ -93,8 +93,7 @@ export default function Screenshots() {
   return (
     <section id="screenshots">
       <div className="container">
-        <p className="eyebrow">On the device</p>
-        <h2>Sample Screens</h2>
+        <h2>Screens from the device</h2>
         <p className="measure">
           Captured from a LilyGo T-Deck running the Camillia dark theme. The
           same screens render on every board, driven by keyboard, trackball,

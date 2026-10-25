@@ -22,7 +22,6 @@ export default function ThemeRail({ theme, mode, modeLocked, onModeChange, onThe
   return (
     <section id="themes" className="band">
       <div className="container">
-        <p className="eyebrow">Appearance</p>
         <h2>Thirteen palettes, straight off the device</h2>
         <p className="measure">
           Each palette is computed from the same four anchor colors the firmware

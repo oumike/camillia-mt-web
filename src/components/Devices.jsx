@@ -2,14 +2,13 @@ export default function Devices({ devices, title, intro }) {
   return (
     <section id="devices" className="band">
       <div className="container">
-        <p className="eyebrow">Hardware</p>
         <h2>{title}</h2>
         <p className="measure">{intro}</p>
 
-        <div className="grid device-grid">
+        <ul className="device-list" role="list">
           {devices.map((d) => (
-            <article className="panel device" key={d.env}>
-              <header className="device-head">
+            <li className="device" key={d.env}>
+              <div className="device-head">
                 <h3>
                   {d.link ? (
                     <a href={d.link} target="_blank" rel="noreferrer">
@@ -19,9 +18,9 @@ export default function Devices({ devices, title, intro }) {
                     d.name
                   )}
                 </h3>
-                <span className="device-env">{d.env}</span>
-              </header>
-              {d.desc && <p>{d.desc}</p>}
+                <code className="device-env">{d.env}</code>
+              </div>
+              {d.desc && <p className="device-desc">{d.desc}</p>}
               <p className="device-foot">
                 {d.chip && <span className="device-chip">{d.chip}</span>}
                 {d.buy && (
@@ -31,13 +30,13 @@ export default function Devices({ devices, title, intro }) {
                     target="_blank"
                     rel="noreferrer"
                   >
-                    Buy at {d.buy.seller} <span aria-hidden="true">→</span>
+                    Buy at {d.buy.seller}
                   </a>
                 )}
               </p>
-            </article>
+            </li>
           ))}
-        </div>
+        </ul>
       </div>
     </section>
   );

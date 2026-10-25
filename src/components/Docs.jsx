@@ -17,12 +17,11 @@ export default function Docs({ steps = MT_STEPS, title = 'Three steps to a node 
   return (
     <section id="docs" className="band">
       <div className="container">
-        <p className="eyebrow">First run</p>
         <h2>{title}</h2>
         <ol className="steps" role="list">
           {steps.map((s, i) => (
             <li key={s.title}>
-              <span className="step-n">{String(i + 1).padStart(2, '0')}</span>
+              <span className="step-n">{i + 1}</span>
               <div>
                 <h3>{s.title}</h3>
                 <p>{s.body}</p>

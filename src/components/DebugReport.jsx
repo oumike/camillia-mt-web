@@ -340,7 +340,6 @@ export default function DebugReport({ device, version, supported }) {
           >
             <div className="debug-report-head">
               <div>
-                <p className="eyebrow">Serial diagnostics</p>
                 <h3 id="debug-report-title">Debug &amp; report</h3>
               </div>
               <button

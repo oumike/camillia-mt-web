@@ -19,7 +19,7 @@ const FOCUSABLE = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1
 
 // `product` is MT_FIRMWARE or CS_FIRMWARE from firmware.js; `devices` is that
 // firmware's board list. Debug & report speaks camillia-mt's serial health
-// commands, and Flash and Customize its `cfg` commands, so both are only
+// commands, and Flash and customize its `cfg` commands, so both are only
 // offered where the firmware answers them.
 export default function Flasher({ product, devices, debugReport = false, customize = false }) {
   const [supported, setSupported] = useState(true)
@@ -39,13 +39,13 @@ export default function Flasher({ product, devices, debugReport = false, customi
   useEffect(() => setSupported(serialSupported()), [])
 
   // esp-web-tools appends its install dialog to <body> and fires `closed` when
-  // it goes. Only an install started by Flash and Customize, once finished,
+  // it goes. Only an install started by Flash and customize, once finished,
   // goes on to apply the settings, over the port the installer already had (so
   // there is no second port prompt); a plain Flash never does.
   //
   // Camillia has no Improv, so after "Installation complete!" esp-web-tools'
   // Next leads back to its dashboard, whose first option is Install again. For
-  // a Flash and Customize install the dialog is closed for the user once the
+  // a Flash and customize install the dialog is closed for the user once the
   // completion screen has shown.
   useEffect(() => {
     if (!customize || typeof MutationObserver === 'undefined') return undefined
@@ -210,7 +210,6 @@ export default function Flasher({ product, devices, debugReport = false, customi
   return (
     <section id="flash">
       <div className="container">
-        <p className="eyebrow">Install</p>
         <h2>Flash from your browser</h2>
         <p className="measure">
           Plug the device in over USB, pick its build profile and firmware

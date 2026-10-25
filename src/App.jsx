@@ -97,7 +97,7 @@ export default function App() {
       {page === 'cs' ? (
         <Footer mark="Camillia Chat Server" repo="oumike/camillia-chat-server" />
       ) : (
-        <Footer mark="Camillia for Meshtastic · GPLv3" repo="oumike/camillia-mt" keys />
+        <Footer mark="Camillia for Meshtastic, GPLv3" repo="oumike/camillia-mt" keys />
       )}
     </>
   )

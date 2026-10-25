@@ -243,7 +243,7 @@ function applyErrorText(error) {
         : `Could not apply: ${error?.message || 'Unknown serial error'}`
 }
 
-// Flash and Customize: the user picks settings, Continue saves them in the
+// Flash and customize: the user picks settings, Continue saves them in the
 // browser and starts the installer through `onFlash` (Flasher's esp-web-tools
 // button). When that install finishes Flasher passes `flashed` ({ id, port }),
 // and the settings are sent to the device over that same port with no further
@@ -465,7 +465,7 @@ export default function Customize({ supported, canFlash = false, onFlash, flashe
           ? 'Web Serial requires Chrome, Edge, or Opera on desktop over HTTPS'
           : 'Choose settings, flash, then send them to the device'}
       >
-        Flash and Customize
+        Flash and customize
       </button>
 
       {status && (
@@ -508,8 +508,7 @@ export default function Customize({ supported, canFlash = false, onFlash, flashe
           >
             <div className="debug-report-head">
               <div>
-                <p className="eyebrow">Pre-configure</p>
-                <h3 id="customize-title">Flash and Customize</h3>
+                <h3 id="customize-title">Flash and customize</h3>
               </div>
               <button
                 type="button"

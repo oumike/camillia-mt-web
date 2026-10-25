@@ -24,7 +24,6 @@ function CsHero() {
     <section id="top" className="hero">
       <div className="container hero-inner">
         <div className="hero-copy">
-          <p className="eyebrow">ESP32-S3 / P4 · LoRa mesh · Chat server</p>
           <h1>Catch up on what you missed</h1>
           <p className="lede">
             Camillia Chat Server turns almost any board Camillia-MT runs on into an always-on listener
@@ -38,7 +37,6 @@ function CsHero() {
             <a className={CAN_FLASH ? 'btn btn-ghost' : 'btn'} href={`https://github.com/${CS_FIRMWARE.repo}`}
                target="_blank" rel="noreferrer">View source on GitHub</a>
           </div>
-          <p className="hero-spec">13 builds · 10 channels · 250 messages each · LoRa + MQTT</p>
         </div>
 
         <figure className="hero-screen">
@@ -46,7 +44,7 @@ function CsHero() {
                aria-label="The chat server's status page: its name, address, MQTT state, and how many messages it holds.">
             {OLED_LINES.map(l => <span key={l}>{l}</span>)}
           </div>
-          <figcaption>Heltec WiFi LoRa 32 V4 · 128 × 64 OLED · status page</figcaption>
+          <figcaption>The status page on a Heltec V4’s 128 × 64 OLED.</figcaption>
         </figure>
       </div>
     </section>
@@ -55,32 +53,26 @@ function CsHero() {
 
 const FEATURES = [
   {
-    tag: 'Listen',
     title: 'On your mesh, not beside it',
     body: 'The server sits on the same region, preset, and frequency slot as the mesh it serves, so it hears what your nodes hear and stock Meshtastic nodes relay its replies. MQTT can feed it too, receive only: it never publishes.',
   },
   {
-    tag: 'Store',
     title: 'Ten channels, 250 messages each',
     body: 'Channel text messages are kept in PSRAM and saved to flash, so a power cut does not lose history. A message heard over both LoRa and MQTT, or relayed several times, is stored once. Direct messages are never stored.',
   },
   {
-    tag: 'Discover',
     title: 'Found automatically, or picked by hand',
     body: 'Camillia-MT nodes find a server on a shared discovery channel and use the first one that carries their channels. Pick one yourself from the node list and it is never replaced.',
   },
   {
-    tag: 'Replay',
     title: 'Only what you missed',
     body: 'Each node keeps a cursor per channel, so a returning node gets only the messages after the last one it saw, in small paced batches. Lost packets show up as gaps and are asked for again.',
   },
   {
-    tag: 'Keys',
     title: 'History stays with the key',
     body: 'Requests and replies travel on the channel being synced, under that channel’s own key. A node that cannot read a channel cannot ask for its history either.',
   },
   {
-    tag: 'Config',
     title: 'Set it up from a browser',
     body: 'The server hosts its own Wi-Fi access point and config page: radio, channels, pacing, MQTT, live status, and a stored-message viewer per channel. Back the whole config up to YAML and restore it.',
   },
@@ -90,12 +82,10 @@ function CsFeatures() {
   return (
     <section id="features">
       <div className="container">
-        <p className="eyebrow">What it does</p>
         <h2>Store and replay, for Camillia</h2>
-        <div className="grid feature-grid">
+        <div className="feature-grid">
           {FEATURES.map(f => (
-            <div className="panel" key={f.title}>
-              <span className="tag">{f.tag}</span>
+            <div className="feature" key={f.title}>
               <h3>{f.title}</h3>
               <p>{f.body}</p>
             </div>
