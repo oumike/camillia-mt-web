@@ -13,7 +13,7 @@ export const MT_STEPS = [
   },
 ]
 
-export default function Docs({ steps = MT_STEPS, title = 'Three steps to a node on the mesh' }) {
+export default function Docs({ steps = MT_STEPS, title = 'First-time setup' }) {
   return (
     <section id="docs" className="band">
       <div className="container">

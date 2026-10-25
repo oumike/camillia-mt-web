@@ -2,7 +2,7 @@ export default function AI() {
   return (
     <section id="ai">
       <div className="container">
-        <h2>Built in my spare time, with an AI partner</h2>
+        <h2>About this project</h2>
         <div className="measure">
           <p>
             I've been a developer professionally since about 2001, across a long

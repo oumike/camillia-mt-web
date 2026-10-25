@@ -24,7 +24,7 @@ function CsHero() {
     <section id="top" className="hero">
       <div className="container hero-inner">
         <div className="hero-copy">
-          <h1>Catch up on what you missed</h1>
+          <h1>Camillia Chat Server</h1>
           <p className="lede">
             Camillia Chat Server turns almost any board Camillia-MT runs on into an always-on listener
             for your Meshtastic channels. It keeps the recent history of each
@@ -53,27 +53,27 @@ function CsHero() {
 
 const FEATURES = [
   {
-    title: 'On your mesh, not beside it',
+    title: 'Radio and MQTT',
     body: 'The server sits on the same region, preset, and frequency slot as the mesh it serves, so it hears what your nodes hear and stock Meshtastic nodes relay its replies. MQTT can feed it too, receive only: it never publishes.',
   },
   {
-    title: 'Ten channels, 250 messages each',
+    title: 'Message storage',
     body: 'Channel text messages are kept in PSRAM and saved to flash, so a power cut does not lose history. A message heard over both LoRa and MQTT, or relayed several times, is stored once. Direct messages are never stored.',
   },
   {
-    title: 'Found automatically, or picked by hand',
+    title: 'Server discovery',
     body: 'Camillia-MT nodes find a server on a shared discovery channel and use the first one that carries their channels. Pick one yourself from the node list and it is never replaced.',
   },
   {
-    title: 'Only what you missed',
+    title: 'Catch-up replay',
     body: 'Each node keeps a cursor per channel, so a returning node gets only the messages after the last one it saw, in small paced batches. Lost packets show up as gaps and are asked for again.',
   },
   {
-    title: 'History stays with the key',
+    title: 'Channel keys',
     body: 'Requests and replies travel on the channel being synced, under that channel’s own key. A node that cannot read a channel cannot ask for its history either.',
   },
   {
-    title: 'Set it up from a browser',
+    title: 'Browser setup',
     body: 'The server hosts its own Wi-Fi access point and config page: radio, channels, pacing, MQTT, live status, and a stored-message viewer per channel. Back the whole config up to YAML and restore it.',
   },
 ]
@@ -82,7 +82,7 @@ function CsFeatures() {
   return (
     <section id="features">
       <div className="container">
-        <h2>Store and replay, for Camillia</h2>
+        <h2>Features</h2>
         <div className="feature-grid">
           {FEATURES.map(f => (
             <div className="feature" key={f.title}>
@@ -118,11 +118,11 @@ export default function CsPage() {
       <CsFeatures />
       <Devices
         devices={CS_DEVICES}
-        title="Every Camillia-MT board but the Cardputer"
+        title="Supported boards"
         intro={`Every board Camillia-MT supports can run the server except the Cardputer, which has no PSRAM for the message store. The Heltec V4 gets two builds: the expansion kit takes over the pins the OLED uses, so it is a separate build rather than a setting. Screens of 320×240 and larger show the same health, message feed and activity pages, scaled up; the T-Deck Pro's e-paper shows a plain status page.${CAN_FLASH ? ' Pick yours in the flasher.' : ''}`}
       />
       {CAN_FLASH && <Flasher product={CS_FIRMWARE} devices={CS_DEVICES} customize="cs" />}
-      <Docs steps={STEPS} title="Three steps to a server on the mesh" />
+      <Docs steps={STEPS} title="First-time setup" />
     </>
   )
 }

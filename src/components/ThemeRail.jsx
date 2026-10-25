@@ -22,7 +22,7 @@ export default function ThemeRail({ theme, mode, modeLocked, onModeChange, onThe
   return (
     <section id="themes" className="band">
       <div className="container">
-        <h2>Thirteen palettes, straight off the device</h2>
+        <h2>Themes</h2>
         <p className="measure">
           Each palette is computed from the same four anchor colors the firmware
           stores, run through the same blend it does at boot. Pick one and this

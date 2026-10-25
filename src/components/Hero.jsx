@@ -6,7 +6,7 @@ export default function Hero() {
     <section id="top" className="hero">
       <div className="container hero-inner">
         <div className="hero-copy">
-          <h1>Meshtastic without the phone</h1>
+          <h1>Camillia for Meshtastic</h1>
           <p className="lede">
             Camillia is mesh radio firmware for thirteen ESP32 boards. Ten named
             channels, direct messages, GPS, and a config UI you open in a
