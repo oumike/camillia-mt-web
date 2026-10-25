@@ -11,6 +11,9 @@
 //   cfg logo begin <bytes>, cfg logo data <hex>, cfg logo end <crc32>, cfg logo clear
 //   cfg set longname|shortname|ssid|wifipass <%-encoded>, cfg set region <code>,
 //   cfg set role <ROLE>     -> [cfg] ok <field> staged | [cfg] err <field>: ...
+//   cfg set mqtt host=<%-encoded> port=<n> user=<%-encoded> pass=<%-encoded> root=<%-encoded> tls=0|1 enc=0|1
+//                           -> [cfg] ok mqtt=<host>:<port> staged (committed with MQTT switched on)
+//   cfg set oktomqtt 0|1    -> [cfg] ok oktomqtt=<v> staged
 //   cfg commit              -> [cfg] ok committed ... applies-after=setup|setup-done rebooting|rebooting|unchanged
 //   cfg abort               -> [cfg] ok aborted
 //
@@ -71,7 +74,10 @@ export function newChannel(index) {
 // its radio is a stock preset, on its default frequency slot or the one in
 // `slot` (1-based, as the Meshtastic apps number them). The flasher cannot set
 // a frequency that is not on a slot, so MeshOregon, YYCMesh and Spain are left
-// out. An empty `preset` keeps the device's own; `url` is optional. Logos are
+// out. An empty `preset` keeps the device's own; `url` is optional. `mqtt` is
+// the community's broker, where it publishes one anyone can use: host and root
+// topic, with port 1883, no login, no TLS and encryption on unless given.
+// Sending it also switches MQTT on. `okToMqtt` sets the device's "OK to MQTT". Logos are
 // rendered from each community's own SVG
 // (chicagolandmesh.org/assets/images/logo-clear.svg,
 // michmesh.net/img/michmesh-logo-dark.svg).
@@ -85,7 +91,8 @@ export const PROFILES = [
     region: 'US',
     logo: withBase('/logos/chimesh.png'),
     channels: [primary({ pos: true, up: true }), secondary('Chicago', CHICAGO_PSK)],
-    notes: 'ChiMesh also recommends hop limit 7, a 3-hour NodeInfo interval and MQTT via mqtt.chimesh.org (root topic msh/US/IL/Chi); set those on the device.',
+    mqtt: { host: 'mqtt.chimesh.org', root: 'msh/US/IL/Chi' },
+    notes: 'ChiMesh also recommends hop limit 7 and a 3-hour NodeInfo interval; set those on the device. Its broker publishes no login, so none is set.',
   },
   {
     id: 'michmesh',
@@ -107,7 +114,8 @@ export const PROFILES = [
       secondary('W8ZHO', 'none'),
       secondary('Chicago', CHICAGO_PSK),
     ],
-    notes: 'W8ZHO and Chicago come from Muskegon Mesh. Ten channels need a device with ten slots (the Cardputer has eight). MichMesh suggests turning on position and uplink on the primary channel if you want to appear on its maps, and "OK to MQTT" with root topic msh/US/MI; set those on the device.',
+    mqtt: { host: 'mqtt.michmesh.net', user: 'meshdev', pass: 'large4cats', root: 'msh/US/MI', okToMqtt: true },
+    notes: 'W8ZHO and Chicago come from Muskegon Mesh. Ten channels need a device with ten slots (the Cardputer has eight). MichMesh suggests turning on position and uplink on the primary channel if you want to appear on its maps.',
   },
   {
     id: 'iowamesh',
@@ -116,7 +124,8 @@ export const PROFILES = [
     preset: 'LongFast',
     region: 'US',
     channels: [PRIMARY_CHANNEL, secondary('IROMesh', '7V8jZEvMrVrEXx/c8UekOwE+tSlWaWNffKr6zBtQo/A=')],
-    notes: 'Iowa Mesh runs its own MQTT broker, mqtt.iowamesh.net port 8882 (user iromesh, password 2Gab9eAz, root topic iromesh, JSON on, encryption off); set that on the device.',
+    mqtt: { host: 'mqtt.iowamesh.net', port: 8882, user: 'iromesh', pass: '2Gab9eAz', root: 'iromesh', encryption: false },
+    notes: 'Iowa Mesh\'s broker also wants JSON on, which Camillia-MT does not send.',
   },
   {
     id: 'meshstl',
@@ -132,7 +141,8 @@ export const PROFILES = [
       secondary('MAC-EAS', 'default'),
       secondary('Rolla-EAS', 'default'),
     ],
-    notes: 'The -EAS channels carry emergency alerts. MeshSTL\'s MQTT broker is mqtt.meshstl.org port 1883 (user MeshSTL, password meshstl, root topic msh/US/MeshSTL); set that on the device.',
+    mqtt: { host: 'mqtt.meshstl.org', user: 'MeshSTL', pass: 'meshstl', root: 'msh/US/MeshSTL' },
+    notes: 'The -EAS channels carry emergency alerts.',
   },
   {
     id: 'lzmesh',
@@ -145,7 +155,8 @@ export const PROFILES = [
       secondary('LZMesh', 'uLT6S8kQlQHjA7yEtBkzIj3zm6K6lE55mulplDZyF/0=', true),
       secondary('LZRF', 'dTEweE82YjhWc1pRS1dzY1FESEk4dnlBcVM2SUxmV3c='),
     ],
-    notes: 'LZMesh doesn\'t publish its radio preset, so the device keeps its own. LZRF stays on the radio; LZMesh also goes to MQTT, via mqtt.lzmesh.com (meshdev / large4cats, root topic msh/LZ); set that on the device.',
+    mqtt: { host: 'mqtt.lzmesh.com', user: 'meshdev', pass: 'large4cats', root: 'msh/LZ' },
+    notes: 'LZMesh doesn\'t publish its radio preset, so the device keeps its own. LZRF stays on the radio; LZMesh also goes to MQTT.',
   },
   {
     id: 'pugetmesh',
@@ -158,7 +169,8 @@ export const PROFILES = [
       secondary('PS-Mesh!', 'jHrxpQOq6dEBC5Ldr3ULrQ=='),
       secondary('PS-MQTT!', 'mqttmqttmqttmqttmqttQQ==', true),
     ],
-    notes: 'PS-MQTT! is relayed to Puget Mesh\'s Discord. Their broker is meshtastic.pugetmesh.org (meshdev / large4cats, root topic msh/US); set that on the device.',
+    mqtt: { host: 'meshtastic.pugetmesh.org', user: 'meshdev', pass: 'large4cats', root: 'msh/US' },
+    notes: 'PS-MQTT! is relayed to Puget Mesh\'s Discord.',
   },
   {
     id: 'floridamesh',
@@ -184,7 +196,8 @@ export const PROFILES = [
     preset: 'LongFast',
     region: 'US',
     channels: [PRIMARY_CHANNEL, secondary('ConnNet', 'pJgk5XqJY8Ar+jSqC5W81g==')],
-    notes: 'CT Mesh\'s broker, mqtt.ctmesh.org (meshdev / large4cats, root topic msh/US/CT), takes uplink only; set that on the device.',
+    mqtt: { host: 'mqtt.ctmesh.org', user: 'meshdev', pass: 'large4cats', root: 'msh/US/CT' },
+    notes: 'CT Mesh\'s broker takes uplink only.',
   },
   {
     id: 'nwimesh',
@@ -194,7 +207,8 @@ export const PROFILES = [
     preset: 'LongFast',
     region: 'US',
     channels: [primary({ up: true }), { ...secondary('Testing', 'default'), up: true }, secondary('NWI', CHICAGO_PSK)],
-    notes: 'NWI shares its key with ChiMesh\'s Chicago channel. It recommends hop limit 7 and its broker, mqtt.nwimesh.net (meshdev / large4cats, root topic msh/US/IN/NWI); set those on the device.',
+    mqtt: { host: 'mqtt.nwimesh.net', user: 'meshdev', pass: 'large4cats', root: 'msh/US/IN/NWI' },
+    notes: 'NWI shares its key with ChiMesh\'s Chicago channel. It recommends hop limit 7; set that on the device.',
   },
   {
     id: 'bostonmesh',
@@ -204,7 +218,8 @@ export const PROFILES = [
     preset: 'LongFast',
     region: 'US',
     channels: [PRIMARY_CHANNEL],
-    notes: 'Greater Boston Mesh uses the default channel. Its broker is mqttmt01.bostonme.sh port 1883 (meshdev / large4cats, root topic msh/US/MA); set that on the device.',
+    mqtt: { host: 'mqttmt01.bostonme.sh', user: 'meshdev', pass: 'large4cats', root: 'msh/US/MA' },
+    notes: 'Greater Boston Mesh uses the default channel.',
   },
   {
     id: 'centralvalley',
@@ -214,7 +229,8 @@ export const PROFILES = [
     preset: '',
     region: 'US',
     channels: [PRIMARY_CHANNEL],
-    notes: 'Central Valley Mesh runs Long Fast or Medium Fast depending on the area, so the device keeps its own; ask in their Discord. Their community channel CVM is shared there too. The broker is mqtt.cvme.sh (cvmesh / large4dogs, root topic msh/US/CA/centralvalley); set that on the device.',
+    mqtt: { host: 'mqtt.cvme.sh', user: 'cvmesh', pass: 'large4dogs', root: 'msh/US/CA/centralvalley' },
+    notes: 'Central Valley Mesh runs Long Fast or Medium Fast depending on the area, so the device keeps its own; ask in their Discord. Their community channel CVM is shared there too.',
   },
   {
     id: 'freq51',
@@ -244,7 +260,8 @@ export const PROFILES = [
     slot: 48,
     region: 'US',
     channels: [PRIMARY_CHANNEL],
-    notes: 'nyme.sh\'s broker is mqtt.nyme.sh (meshdev / large4cats, root topic msh/US/NY) and takes no downlink; set that on the device.',
+    mqtt: { host: 'mqtt.nyme.sh', user: 'meshdev', pass: 'large4cats', root: 'msh/US/NY' },
+    notes: 'nyme.sh\'s broker takes no downlink.',
   },
   {
     id: 'nova',
@@ -312,7 +329,8 @@ export const PROFILES = [
       secondary('CRUZ', 'NA=='),
       secondary('Test', 'TQ=='),
     ],
-    notes: 'BayMesh lists more public channels than fit (First 1A==, Retro eQ==, Boozin\' ew==, TheBadPlace 5g==). It recommends hop limit 4 for relays and 6 for handhelds, and its broker is mqtt.bayme.sh (meshdev / large4cats, root topic msh/US/bayarea); set those on the device. Ten channels need a device with ten slots (the Cardputer has eight).',
+    mqtt: { host: 'mqtt.bayme.sh', user: 'meshdev', pass: 'large4cats', root: 'msh/US/bayarea' },
+    notes: 'BayMesh lists more public channels than fit (First 1A==, Retro eQ==, Boozin\' ew==, TheBadPlace 5g==). It recommends hop limit 4 for relays and 6 for handhelds; set that on the device. Ten channels need a device with ten slots (the Cardputer has eight).',
   },
   {
     id: 'socalmesh',
@@ -322,7 +340,8 @@ export const PROFILES = [
     preset: 'LongTurbo',
     region: 'US',
     channels: [PRIMARY_CHANNEL],
-    notes: 'Long Turbo on slot 14 is what SoCal Mesh\'s home page recommends; its older best-practices page still says Long Fast on slot 20. Their broker is mqtt.socalmesh.org (meshdev / large4cats, root topic msh/US/CA/socalmesh); set that on the device.',
+    mqtt: { host: 'mqtt.socalmesh.org', user: 'meshdev', pass: 'large4cats', root: 'msh/US/CA/socalmesh' },
+    notes: 'Long Turbo on slot 14 is what SoCal Mesh\'s home page recommends; its older best-practices page still says Long Fast on slot 20.',
   },
   {
     id: 'phillymesh',
@@ -340,7 +359,8 @@ export const PROFILES = [
     preset: 'MediumFast',
     region: 'US',
     channels: [PRIMARY_CHANNEL],
-    notes: 'Colorado Mesh uses the official broker with root topic msh/US/CO; set that on the device.',
+    mqtt: { host: 'mqtt.meshtastic.org', user: 'meshdev', pass: 'large4cats', root: 'msh/US/CO' },
+    notes: 'Colorado Mesh uses the official broker with its own root topic.',
   },
   {
     id: 'mspmesh',
@@ -365,7 +385,8 @@ export const PROFILES = [
       secondary('Meshergex', 'MQ=='),
       secondary('Alert', 'none'),
     ],
-    notes: 'MBUG publishes the Meshergex and Alert keys as MX== and AL==, which are the same keys as MQ== and none. Their broker is mqtt.mbug.com.au (mbug / small4dogs, root topic msh/ANZ); set that on the device.',
+    mqtt: { host: 'mqtt.mbug.com.au', user: 'mbug', pass: 'small4dogs', root: 'msh/ANZ' },
+    notes: 'MBUG publishes the Meshergex and Alert keys as MX== and AL==, which are the same keys as MQ== and none.',
   },
   {
     id: 'nz-shortfast',
@@ -425,7 +446,8 @@ export const PROFILES = [
     preset: 'ShortSlow',
     region: 'EU_868',
     channels: [PRIMARY_CHANNEL, secondary('Mesh Hessen', '+uTMEaOR7hkqaXv+DROOEd5BhvAIQY/CZ/Hr4soZcOU=')],
-    notes: 'Mesh Hessen\'s broker is mqtt.meshhessen.de (meshhessen / meshhessen, root topic msh/EU_868); set that on the device.',
+    mqtt: { host: 'mqtt.meshhessen.de', user: 'meshhessen', pass: 'meshhessen', root: 'msh/EU_868' },
+    notes: '',
   },
   {
     id: 'gaulix',
@@ -461,7 +483,8 @@ export const PROFILES = [
       secondary('Portugal_RF', 'default'),
       secondary('MFTest', 'default', true),
     ],
-    notes: 'Portugal_RF stays on the radio. The community also publishes a channel for each district (see their channel list), uses a hop limit of 4 and runs its own broker, mqtt.meshtastic.pt (meshdev / large4cats, root topic msh); set those on the device.',
+    mqtt: { host: 'mqtt.meshtastic.pt', user: 'meshdev', pass: 'large4cats', root: 'msh' },
+    notes: 'Portugal_RF stays on the radio. The community also publishes a channel for each district (see their channel list) and uses a hop limit of 4; set those on the device.',
   },
   {
     id: 'finland',
@@ -484,7 +507,8 @@ export const PROFILES = [
     preset: 'MediumFast',
     region: 'EU_868',
     channels: [PRIMARY_CHANNEL, secondary('Hungary', 'default')],
-    notes: 'Hungary\'s 433 MHz network is on a frequency the flasher cannot set. The community broker is mqtt.creativo.hu (meshdev / large4cats, root topic msh/EU_868/HU).',
+    mqtt: { host: 'mqtt.creativo.hu', user: 'meshdev', pass: 'large4cats', root: 'msh/EU_868/HU' },
+    notes: 'Hungary\'s 433 MHz network is listed separately.',
   },
   {
     id: 'hungary-433',
@@ -494,7 +518,8 @@ export const PROFILES = [
     slot: 1,
     region: 'EU_433',
     channels: [PRIMARY_CHANNEL, secondary('Hungary', 'default')],
-    notes: 'Long Fast at 433.125 MHz (slot 1). The broker is mqtt.creativo.hu (meshdev / large4cats, root topic msh/EU_433/HU).',
+    mqtt: { host: 'mqtt.creativo.hu', user: 'meshdev', pass: 'large4cats', root: 'msh/EU_433/HU' },
+    notes: 'Long Fast at 433.125 MHz (slot 1).',
   },
   {
     id: 'kyiv',
@@ -523,7 +548,8 @@ export const PROFILES = [
     preset: 'MediumFast',
     region: 'EU_868',
     channels: [PRIMARY_CHANNEL],
-    notes: 'Meshat.se\'s broker is mqtt.meshat.se (msh / msh, root topic msh/SE); set that on the device.',
+    mqtt: { host: 'mqtt.meshat.se', user: 'msh', pass: 'msh', root: 'msh/SE' },
+    notes: '',
   },
   {
     id: 'warsaw',
@@ -564,7 +590,7 @@ export function profileName(profile) {
 
 // What choosing a profile fills in, for the note under the list.
 export function profileFills(profile) {
-  const parts = [profile.preset && 'radio preset', profile.slot && 'frequency slot', 'channels', profile.logo && 'logo'].filter(Boolean)
+  const parts = [profile.preset && 'radio preset', profile.slot && 'frequency slot', 'channels', profile.mqtt && 'MQTT broker', profile.logo && 'logo'].filter(Boolean)
   return parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts.at(-1)}` : parts[0]
 }
 
@@ -620,7 +646,7 @@ export function newSetup() {
   return { longName: '', shortName: '', region: 'US', role: 'CLIENT_MUTE', wifiSsid: '', wifiPass: '' }
 }
 
-export const EMPTY_CUSTOMIZATION = { preset: '', slot: 0, channels: null, logo: '', setup: null }
+export const EMPTY_CUSTOMIZATION = { preset: '', slot: 0, channels: null, logo: '', setup: null, mqtt: null }
 
 export const SLOT_MAX = 255
 
@@ -699,6 +725,29 @@ function cleanChannel(raw, index) {
   }
 }
 
+// A broker as the profiles give it, with the defaults filled in.
+export function mqttSettings(raw) {
+  if (!raw || typeof raw !== 'object' || typeof raw.host !== 'string' || typeof raw.root !== 'string') return null
+  if (!raw.host.trim() || !raw.root.trim()) return null
+  const port = Number.isInteger(raw.port) && raw.port > 0 && raw.port <= 65535 ? raw.port : 1883
+  const out = {
+    host: raw.host.trim(),
+    port,
+    user: typeof raw.user === 'string' ? raw.user : '',
+    pass: typeof raw.pass === 'string' ? raw.pass : '',
+    root: raw.root.trim(),
+    tls: raw.tls === true,
+    encryption: raw.encryption !== false,
+  }
+  if (typeof raw.okToMqtt === 'boolean') out.okToMqtt = raw.okToMqtt
+  return out
+}
+
+export function mqttCommand(mqtt) {
+  return `cfg set mqtt host=${percentEncode(mqtt.host)} port=${mqtt.port} user=${percentEncode(mqtt.user)}`
+    + ` pass=${percentEncode(mqtt.pass)} root=${percentEncode(mqtt.root)} tls=${mqtt.tls ? 1 : 0} enc=${mqtt.encryption ? 1 : 0}`
+}
+
 export function loadCustomization() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null')
@@ -718,7 +767,8 @@ export function loadCustomization() {
           role: ROLES.some(r => r.name === raw.role) ? raw.role : 'CLIENT_MUTE',
         }
       : null
-    return { ...EMPTY_CUSTOMIZATION, preset, slot, channels, logo, setup }
+    const mqtt = mqttSettings(saved?.mqtt)
+    return { ...EMPTY_CUSTOMIZATION, preset, slot, channels, logo, setup, mqtt }
   } catch {
     return { ...EMPTY_CUSTOMIZATION }
   }
@@ -737,7 +787,7 @@ export function saveCustomization(settings) {
 
 export function customizationCount(settings) {
   return (settings?.preset ? 1 : 0) + (settings?.channels ? 1 : 0) + (settings?.logo ? 1 : 0)
-    + (settings?.setup ? 1 : 0)
+    + (settings?.setup ? 1 : 0) + (settings?.mqtt ? 1 : 0)
 }
 
 export function presetLabel(name) {
@@ -953,7 +1003,7 @@ export async function applyCustomization(port, settings, log = () => {}) {
     const wants = key => {
       if (caps.keys.includes(key)) return
       throw new CustomizeError(
-        `This firmware cannot set the ${{ logo: 'boot logo', setup: 'setup answers', slot: 'frequency slot' }[key] ?? key}. Flash a newer Camillia-MT release and try again.`
+        `This firmware cannot set the ${{ logo: 'boot logo', setup: 'setup answers', slot: 'frequency slot', mqtt: 'MQTT broker' }[key] ?? key}. Flash a newer Camillia-MT release and try again.`
       )
     }
     const fail = reply => { throw new CustomizeError(reply.replace(/^\[cfg\] err\s*/, '')) }
@@ -986,6 +1036,20 @@ export async function applyCustomization(port, settings, log = () => {}) {
       for (const [index, channel] of settings.channels.entries()) {
         const set = await command(channelCommand(channel, index), line => /\[cfg\] (ok|err) channel/.test(line))
         if (set.startsWith('[cfg] err')) fail(set)
+      }
+    }
+
+    // Skipped rather than refused on firmware from before `cfg set mqtt`: the
+    // rest of a community's setup still applies, and the broker is in its notes.
+    if (settings.mqtt && !caps.keys.includes('mqtt')) {
+      log('This firmware cannot set the MQTT broker; skipping it. Update the firmware to have it set.')
+    } else if (settings.mqtt) {
+      log(`Setting the MQTT broker to ${settings.mqtt.host}...`)
+      const set = await command(mqttCommand(settings.mqtt), line => /\[cfg\] (ok|err) mqtt/.test(line))
+      if (set.startsWith('[cfg] err')) fail(set)
+      if (typeof settings.mqtt.okToMqtt === 'boolean') {
+        const ok = await command(`cfg set oktomqtt ${settings.mqtt.okToMqtt ? 1 : 0}`, line => /\[cfg\] (ok|err) oktomqtt/.test(line))
+        if (ok.startsWith('[cfg] err')) fail(ok)
       }
     }
 

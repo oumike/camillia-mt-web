@@ -19,6 +19,7 @@ import {
   customizationErrors,
   customizationInvalid,
   loadCustomization,
+  mqttSettings,
   newChannel,
   newSetup,
   prepareLogoSource,
@@ -308,6 +309,8 @@ export default function Customize({ supported, canFlash = false, onFlash, flashe
       preset: chosen.preset,
       slot: chosen.slot ?? 0,
       channels: chosen.channels.map(c => ({ ...c })),
+      // Nor another community's broker.
+      mqtt: mqttSettings(chosen.mqtt),
       // Another community's logo must not carry over.
       logo: chosen.logo ? d.logo : '',
     }))
@@ -712,7 +715,7 @@ export default function Customize({ supported, canFlash = false, onFlash, flashe
                   </button>
                   <p className="browser-note customize-note">
                     Every channel on the device is replaced by this list. Most devices hold
-                    {' '}{MAX_CHANNELS} channels; the Cardputer holds 8. MQTT settings only
+                    {' '}{MAX_CHANNELS} channels; the Cardputer holds 8. The MQTT flags only
                     matter once MQTT is set up on the device.
                   </p>
                 </>
@@ -720,6 +723,33 @@ export default function Customize({ supported, canFlash = false, onFlash, flashe
                 <p className="browser-note customize-note">Keeps the channels the device already has.</p>
               )}
             </fieldset>
+
+            {(draft.mqtt || profile?.mqtt) && (
+              <fieldset className="customize-section">
+                <legend>MQTT</legend>
+                <label className="customize-check">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(draft.mqtt)}
+                    onChange={event => setDraft(d => ({
+                      ...d,
+                      mqtt: event.target.checked ? mqttSettings(profile?.mqtt ?? d.mqtt) : null,
+                    }))}
+                  />
+                  Set up the community's MQTT broker and turn MQTT on
+                </label>
+                <p className="browser-note customize-note">
+                  {draft.mqtt
+                    ? <>Broker <code>{draft.mqtt.host}:{draft.mqtt.port}</code>, root topic{' '}
+                        <code>{draft.mqtt.root}</code>
+                        {draft.mqtt.user ? <>, login <code>{draft.mqtt.user}</code></> : ', no login'}
+                        {draft.mqtt.encryption ? '' : ', encryption off'}
+                        {draft.mqtt.okToMqtt ? ', and OK to MQTT on' : ''}. MQTT needs the device on
+                        Wi-Fi; it is switched on too when a network is set.</>
+                    : 'Keeps the device\'s MQTT settings.'}
+                </p>
+              </fieldset>
+            )}
 
             <div className="debug-report-actions">
               <button
