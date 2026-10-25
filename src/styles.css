@@ -460,11 +460,27 @@ section[id]:focus { outline: none; }
 
 .device {
   display: grid;
-  grid-template-columns: minmax(0, 17rem) minmax(0, 1fr) 10rem;
-  gap: 6px 32px;
-  align-items: baseline;
+  grid-template-columns: 128px minmax(0, 15rem) minmax(0, 1fr) 10rem;
+  gap: 6px 28px;
+  align-items: start;
   padding: 18px 0;
   border-top: 1px solid var(--divider);
+}
+
+/* Product shots come from the sellers on white, so they sit on a white tile
+   in every theme rather than as cut-outs floating on the page. */
+.device-photo {
+  width: 128px;
+  aspect-ratio: 4 / 3;
+  border-radius: 8px;
+  background: #fff;
+  overflow: hidden;
+}
+.device-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 4px;
 }
 
 .device-head h3 { margin: 0 0 4px; font-size: 0.95rem; }
@@ -492,8 +508,15 @@ section[id]:focus { outline: none; }
 .device-buy { color: var(--accent); }
 
 @media (max-width: 860px) {
-  .device { grid-template-columns: 1fr; }
+  .device { grid-template-columns: 128px minmax(0, 1fr); gap: 6px 24px; }
+  .device-photo { grid-row: span 3; }
   .device-foot { flex-direction: row; flex-wrap: wrap; justify-content: space-between; text-align: left; margin-top: 6px; }
+}
+
+/* Phones: the photo would squeeze the text column, so it goes. */
+@media (max-width: 600px) {
+  .device { grid-template-columns: 1fr; }
+  .device-photo { display: none; }
 }
 
 /* --- Screenshots --------------------------------------------------------- */

@@ -8,6 +8,9 @@ export default function Devices({ devices, title, intro }) {
         <ul className="device-list" role="list">
           {devices.map((d) => (
             <li className="device" key={d.env}>
+              <div className="device-photo">
+                {d.image && <img src={d.image} alt="" loading="lazy" />}
+              </div>
               <div className="device-head">
                 <h3>
                   {d.link ? (
