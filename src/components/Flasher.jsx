@@ -9,6 +9,7 @@ import {
 } from '../firmware.js'
 import DebugReport from './DebugReport.jsx'
 import Customize from './Customize.jsx'
+import { PRODUCTS } from '../customize.js'
 
 function serialSupported() {
   return typeof navigator !== 'undefined' && 'serial' in navigator
@@ -301,6 +302,7 @@ export default function Flasher({ product, devices, debugReport = false, customi
               )}
               {customize && (
                 <Customize
+                  product={customize === 'cs' ? PRODUCTS.cs : PRODUCTS.mt}
                   supported={supported}
                   canFlash={Boolean(manifestUrl)}
                   onFlash={flashForCustomize}

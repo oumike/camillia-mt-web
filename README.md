@@ -176,6 +176,14 @@ without them the device holds the settings until on-device setup completes. On
 an existing install it saves them and reboots. Firmware without the `cfg` commands, or without a feature, is
 detected and reported.
 
+The chat server's page has the same dialog (`PRODUCTS.cs` in `customize.js`):
+camillia-chat-server speaks the same `cfg` CLI and reports `product=cs` in
+`cfg caps`. There the channel list holds 20 channels without the position and
+MQTT flags, setup has no role, and the choices are saved apart from
+Camillia-MT's (`camillia.customize.cs`). A commit on the server always clears
+its stored message history before it restarts. It cannot use a broker that
+needs TLS.
+
 ## Updating the firmware version
 
 `FIRMWARE_VERSION` in [`src/firmware.js`](src/firmware.js) is **not** where the

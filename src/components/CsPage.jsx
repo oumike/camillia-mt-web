@@ -131,7 +131,7 @@ export default function CsPage() {
         title="Every Camillia-MT board but the Cardputer"
         intro={`Every board Camillia-MT supports can run the server except the Cardputer, which has no PSRAM for the message store. The Heltec V4 gets two builds: the expansion kit takes over the pins the OLED uses, so it is a separate build rather than a setting. Screens of 320×240 and larger show the same health, message feed and activity pages, scaled up; the T-Deck Pro's e-paper shows a plain status page.${CAN_FLASH ? ' Pick yours in the flasher.' : ''}`}
       />
-      {CAN_FLASH && <Flasher product={CS_FIRMWARE} devices={CS_DEVICES} />}
+      {CAN_FLASH && <Flasher product={CS_FIRMWARE} devices={CS_DEVICES} customize="cs" />}
       <Docs steps={STEPS} title="Three steps to a server on the mesh" />
     </>
   )

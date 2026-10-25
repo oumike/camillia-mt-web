@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import {
   CHANNEL_NAME_MAX,
   LONG_NAME_MAX,
-  MAX_CHANNELS,
+  PRODUCTS,
   PROFILES,
   PROFILE_AREAS,
   profileFills,
@@ -39,7 +39,7 @@ function pskMode(psk) {
   return psk === 'default' || psk === 'none' ? psk : 'custom'
 }
 
-function ChannelRow({ channel, index, error, disabled, onChange, onRemove }) {
+function ChannelRow({ channel, index, error, disabled, flags = true, onChange, onRemove }) {
   const mode = pskMode(channel.psk)
   const set = patch => onChange({ ...channel, ...patch })
   return (
@@ -99,17 +99,17 @@ function ChannelRow({ channel, index, error, disabled, onChange, onRemove }) {
           </label>
         )}
       </div>
-      <div className="customize-channel-flags">
+      {flags && <div className="customize-channel-flags">
         <label><input type="checkbox" checked={channel.pos} onChange={event => set({ pos: event.target.checked })} disabled={disabled} /> Share position</label>
         <label><input type="checkbox" checked={channel.up} onChange={event => set({ up: event.target.checked })} disabled={disabled} /> MQTT uplink</label>
         <label><input type="checkbox" checked={channel.down} onChange={event => set({ down: event.target.checked })} disabled={disabled} /> MQTT downlink</label>
-      </div>
+      </div>}
       {error && <p className="customize-error">{error}</p>}
     </li>
   )
 }
 
-function SetupFields({ setup, errors, onChange }) {
+function SetupFields({ setup, errors, role: showRole = true, onChange }) {
   const set = patch => onChange({ ...setup, ...patch })
   const role = ROLES.find(r => r.name === setup.role)
   return (
@@ -145,14 +145,14 @@ function SetupFields({ setup, errors, onChange }) {
             {REGIONS.map(r => <option key={r.code} value={r.code}>{r.label}</option>)}
           </select>
         </label>
-        <label className="customize-input">
+        {showRole && <label className="customize-input">
           <span>Role</span>
           <select value={setup.role} onChange={event => set({ role: event.target.value })}>
             {ROLES.map(r => <option key={r.name} value={r.name}>{r.label}</option>)}
           </select>
-        </label>
+        </label>}
       </div>
-      {role && <p className="browser-note customize-note">{role.note}</p>}
+      {showRole && role && <p className="browser-note customize-note">{role.note}</p>}
       <div className="customize-channel-fields">
         <label className="customize-input">
           <span>Wi-Fi network (optional)</span>
@@ -248,9 +248,9 @@ function applyErrorText(error) {
 // button). When that install finishes Flasher passes `flashed` ({ id, port }),
 // and the settings are sent to the device over that same port with no further
 // prompt (see customize.js); progress shows inline under the buttons.
-export default function Customize({ supported, canFlash = false, onFlash, flashed = null }) {
+export default function Customize({ supported, canFlash = false, onFlash, flashed = null, product = PRODUCTS.mt }) {
   const [open, setOpen] = useState(false)
-  const [settings, setSettings] = useState(loadCustomization)
+  const [settings, setSettings] = useState(() => loadCustomization(product))
   const [draft, setDraft] = useState(settings)
   const [phase, setPhase] = useState('idle')
   const [status, setStatus] = useState('')
@@ -292,7 +292,7 @@ export default function Customize({ supported, canFlash = false, onFlash, flashe
 
   function commitDraft() {
     setSettings(draft)
-    if (!saveCustomization(draft)) {
+    if (!saveCustomization(draft, product)) {
       setLogoError('This browser could not remember the logo; it will be sent now but not offered next time.')
     }
     return draft
@@ -380,7 +380,7 @@ export default function Customize({ supported, canFlash = false, onFlash, flashe
       flashPortRef.current = port
       const result = await applyCustomization(port, chosen, text => {
         if (mountedRef.current) setStatus(text)
-      })
+      }, product)
       if (!mountedRef.current) return
       setPhase('ready')
       setStatus(result.outcome === 'setup-done'
@@ -388,7 +388,9 @@ export default function Customize({ supported, canFlash = false, onFlash, flashe
         : result.outcome === 'setup'
         ? 'Customization saved. Finish setup on the device; your choices take effect when it completes.'
         : result.outcome === 'rebooting'
-          ? 'Customization saved. The device is rebooting with your choices.'
+          ? product.id === 'cs'
+            ? 'Customization saved. The server restarts with your choices: join its camillia-cs access point, or find it on your Wi-Fi.'
+            : 'Customization saved. The device is rebooting with your choices.'
           : 'The device already had these settings.')
     } catch (error) {
       if (!mountedRef.current) return
@@ -564,18 +566,17 @@ export default function Customize({ supported, canFlash = false, onFlash, flashe
                     setup: event.target.checked ? { ...newSetup(), region: profile?.region ?? 'US' } : null,
                   }))}
                 />
-                Answer setup's questions here
+                {product.setupLabel}
               </label>
               {draft.setup ? (
                 <SetupFields
                   setup={draft.setup}
                   errors={draftSetupErrors}
+                  role={product.role}
                   onChange={setup => setDraft(d => ({ ...d, setup }))}
                 />
               ) : (
-                <p className="browser-note customize-note">
-                  A fresh install asks for its name, region, role and Wi-Fi on the device.
-                </p>
+                <p className="browser-note customize-note">{product.setupOffNote}</p>
               )}
             </fieldset>
 
@@ -678,7 +679,7 @@ export default function Customize({ supported, canFlash = false, onFlash, flashe
               </label>
               {draft.channels ? (
                 <>
-                  <div className="customize-channel customize-channel-all">
+                  {product.channelFlags && <div className="customize-channel customize-channel-all">
                     <span className="customize-channel-slot">All channels</span>
                     <div className="customize-channel-flags">
                       <label><input type="checkbox" checked={allFlags.pos} onChange={event => setAllFlags(f => ({ ...f, pos: event.target.checked }))} /> Share position</label>
@@ -692,7 +693,7 @@ export default function Customize({ supported, canFlash = false, onFlash, flashe
                     >
                       Apply to all channels
                     </button>
-                  </div>
+                  </div>}
                   <ol className="customize-channels">
                     {draft.channels.map((channel, index) => (
                       <ChannelRow
@@ -700,6 +701,7 @@ export default function Customize({ supported, canFlash = false, onFlash, flashe
                         channel={channel}
                         index={index}
                         error={errors[index]}
+                        flags={product.channelFlags}
                         onChange={next => setChannels(list => list.map((c, i) => (i === index ? next : c)))}
                         onRemove={() => setChannels(list => list.filter((_, i) => i !== index))}
                       />
@@ -709,14 +711,12 @@ export default function Customize({ supported, canFlash = false, onFlash, flashe
                     type="button"
                     className="flasher-row-btn"
                     onClick={() => setChannels(list => [...list, newChannel(list.length)])}
-                    disabled={draft.channels.length >= MAX_CHANNELS}
+                    disabled={draft.channels.length >= product.maxChannels}
                   >
                     Add channel
                   </button>
                   <p className="browser-note customize-note">
-                    Every channel on the device is replaced by this list. Most devices hold
-                    {' '}{MAX_CHANNELS} channels; the Cardputer holds 8. The MQTT flags only
-                    matter once MQTT is set up on the device.
+                    Every channel on the device is replaced by this list. {product.channelNote}
                   </p>
                 </>
               ) : (

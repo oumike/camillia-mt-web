@@ -650,7 +650,34 @@ export const EMPTY_CUSTOMIZATION = { preset: '', slot: 0, channels: null, logo: 
 
 export const SLOT_MAX = 255
 
-const STORAGE_KEY = 'camillia.customize'
+// What differs between the two firmwares the dialog customizes. The chat
+// server (camillia-chat-server's cfg CLI, cfg_cli.cpp) keeps 20 channels, has
+// no per-channel position or MQTT flags and no role, answers no setup on the
+// device, and saves its choices apart from Camillia-MT's.
+export const PRODUCTS = {
+  mt: {
+    id: 'mt',
+    name: 'Camillia-MT',
+    maxChannels: MAX_CHANNELS,
+    channelFlags: true,
+    role: true,
+    storageKey: 'camillia.customize',
+    setupLabel: 'Answer setup\'s questions here',
+    setupOffNote: 'A fresh install asks for its name, region, role and Wi-Fi on the device.',
+    channelNote: `Most devices hold ${MAX_CHANNELS} channels; the Cardputer holds 8. The MQTT flags only matter once MQTT is set up on the device.`,
+  },
+  cs: {
+    id: 'cs',
+    name: 'Camillia Chat Server',
+    maxChannels: 20,
+    channelFlags: false,
+    role: false,
+    storageKey: 'camillia.customize.cs',
+    setupLabel: 'Set the server\'s name, region and Wi-Fi',
+    setupOffNote: 'Keeps the server\'s name, region and Wi-Fi.',
+    channelNote: 'The server holds 20 channels and keeps the history of each one. Applying clears all stored history.',
+  },
+}
 
 function base64Bytes(text) {
   try {
@@ -748,13 +775,13 @@ export function mqttCommand(mqtt) {
     + ` pass=${percentEncode(mqtt.pass)} root=${percentEncode(mqtt.root)} tls=${mqtt.tls ? 1 : 0} enc=${mqtt.encryption ? 1 : 0}`
 }
 
-export function loadCustomization() {
+export function loadCustomization(product = PRODUCTS.mt) {
   try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null')
+    const saved = JSON.parse(localStorage.getItem(product.storageKey) ?? 'null')
     const preset = RADIO_PRESETS.some(p => p.name === saved?.preset) ? saved.preset : ''
     const slot = Number.isInteger(saved?.slot) && saved.slot >= 0 && saved.slot <= SLOT_MAX ? saved.slot : 0
     const channels = Array.isArray(saved?.channels) && saved.channels.length
-      ? saved.channels.slice(0, MAX_CHANNELS).map(cleanChannel)
+      ? saved.channels.slice(0, product.maxChannels).map(cleanChannel)
       : null
     const logo = saved?.logo === 'clear' || /^data:image\/png;base64,/.test(saved?.logo ?? '') ? saved.logo : ''
     const raw = saved?.setup
@@ -775,10 +802,10 @@ export function loadCustomization() {
 }
 
 // False when the browser would not keep it (a large logo can exceed the quota).
-export function saveCustomization(settings) {
+export function saveCustomization(settings, product = PRODUCTS.mt) {
   try {
     const kept = settings.setup ? { ...settings, setup: { ...settings.setup, wifiPass: '' } } : settings
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(kept))
+    localStorage.setItem(product.storageKey, JSON.stringify(kept))
     return true
   } catch {
     return false
@@ -797,7 +824,7 @@ export function presetLabel(name) {
 // Parses "[cfg] caps v=1 firstboot=1 keys=preset,channels,logo channels=10
 // logo=296x60 logobg=100C29 logomax=8192 presets=LongFast,LongMod".
 export function parseCaps(line) {
-  const out = { version: 0, firstBoot: false, keys: [], presets: [], channels: 0, logo: null }
+  const out = { version: 0, product: 'mt', firstBoot: false, keys: [], presets: [], channels: 0, logo: null }
   const body = line.slice(line.indexOf('[cfg] caps') + '[cfg] caps'.length)
   for (const token of body.trim().split(/\s+/)) {
     const eq = token.indexOf('=')
@@ -805,6 +832,7 @@ export function parseCaps(line) {
     const key = token.slice(0, eq)
     const value = token.slice(eq + 1)
     if (key === 'v') out.version = Number(value) || 0
+    else if (key === 'product') out.product = value
     else if (key === 'firstboot') out.firstBoot = value === '1'
     else if (key === 'keys') out.keys = value.split(',').filter(Boolean)
     else if (key === 'presets') out.presets = value.split(',').filter(Boolean)
@@ -919,7 +947,7 @@ export class CustomizeError extends Error {}
 // Applies `settings` to an already-opened port. `log` receives progress text.
 // Resolves to { firstBoot, outcome } where outcome is the commit's last word:
 // 'setup' (held until on-device setup completes), 'rebooting', 'unchanged'.
-export async function applyCustomization(port, settings, log = () => {}) {
+export async function applyCustomization(port, settings, log = () => {}, product = PRODUCTS.mt) {
   const encoder = new TextEncoder()
   const decoder = new TextDecoder()
   const reader = port.readable.getReader()
@@ -987,7 +1015,7 @@ export async function applyCustomization(port, settings, log = () => {}) {
       if (!line) continue
       if (line.includes('[cli] unknown command')) {
         throw new CustomizeError(
-          'This firmware does not support customization. Flash a newer Camillia-MT release and try again.'
+          `This firmware does not support customization. Flash a newer ${product.name} release and try again.`
         )
       }
       caps = parseCaps(line)
@@ -1003,7 +1031,7 @@ export async function applyCustomization(port, settings, log = () => {}) {
     const wants = key => {
       if (caps.keys.includes(key)) return
       throw new CustomizeError(
-        `This firmware cannot set the ${{ logo: 'boot logo', setup: 'setup answers', slot: 'frequency slot', mqtt: 'MQTT broker' }[key] ?? key}. Flash a newer Camillia-MT release and try again.`
+        `This firmware cannot set the ${{ logo: 'boot logo', setup: 'setup answers', slot: 'frequency slot', mqtt: 'MQTT broker' }[key] ?? key}. Flash a newer ${product.name} release and try again.`
       )
     }
     const fail = reply => { throw new CustomizeError(reply.replace(/^\[cfg\] err\s*/, '')) }
@@ -1079,7 +1107,8 @@ export async function applyCustomization(port, settings, log = () => {}) {
       const setup = settings.setup
       const fields = [
         ['region', setup.region],
-        ['role', setup.role],
+        // The chat server has no role to set.
+        ['role', product.role && caps.product !== 'cs' && setup.role],
         ['longname', setup.longName.trim() && percentEncode(setup.longName.trim())],
         ['shortname', setup.shortName.trim() && percentEncode(setup.shortName.trim())],
         ['ssid', setup.wifiSsid && percentEncode(setup.wifiSsid)],
