@@ -1,7 +1,7 @@
-import { withBase } from '../basePath'
 import { CAN_FLASH } from '../platform.js'
+import ChatStyleToggle, { chatShot } from './ChatStyleToggle.jsx'
 
-export default function Hero() {
+export default function Hero({ chatStyle, onChatStyleChange }) {
   return (
     <section id="top" className="hero">
       <div className="container hero-inner">
@@ -22,11 +22,12 @@ export default function Hero() {
 
         <figure className="hero-screen">
           <img
-            src={withBase('/screenshots/channel.png')}
-            alt="The Camillia channel view: a timeline of mesh messages, each with a timestamp and sender name, above a row of keyboard shortcuts."
+            src={chatShot(chatStyle, 'channel')}
+            alt="The Camillia channel view: a timeline of mesh messages, each with a timestamp and sender name, above the bottom navigation bar."
             width="320"
             height="240"
           />
+          <ChatStyleToggle style={chatStyle} onChange={onChatStyleChange} size="sm" />
           <figcaption>The channel view on a LilyGo T-Deck, captured at its native 320 × 240.</figcaption>
         </figure>
       </div>

@@ -14,6 +14,7 @@ import CsPage from './components/CsPage.jsx'
 import { DEVICES } from './devices.js'
 import { MT_FIRMWARE } from './firmware.js'
 import { CAN_FLASH } from './platform.js'
+import { DEFAULT_CHAT_STYLE } from './components/ChatStyleToggle.jsx'
 
 const STORAGE_KEY = 'camillia-theme'
 
@@ -48,6 +49,7 @@ function loadInitial() {
 export default function App() {
   const [theme, setTheme] = useState(loadInitial)
   const [page] = useState(currentPage)
+  const [chatStyle, setChatStyle] = useState(DEFAULT_CHAT_STYLE)
 
   useEffect(() => { document.title = TITLES[page] }, [page])
 
@@ -72,7 +74,7 @@ export default function App() {
         </main>
       ) : (
         <main id="main">
-          <Hero />
+          <Hero chatStyle={chatStyle} onChatStyleChange={setChatStyle} />
           <Features />
           <Devices
             devices={DEVICES}
@@ -81,7 +83,7 @@ export default function App() {
               ? 'Every profile below is built from the same source tree. Pick your board in the flasher and it writes the matching build.'
               : 'Every profile below is built from the same source tree. Open this page on a desktop browser to flash one.'}
           />
-          <Screenshots />
+          <Screenshots chatStyle={chatStyle} onChatStyleChange={setChatStyle} />
           <ThemeRail
             theme={theme}
             mode={mode}

@@ -1,25 +1,31 @@
 import { useEffect, useRef, useState } from 'react'
 import { withBase } from '../basePath'
+import ChatStyleToggle, { CHAT_STYLES, chatShot } from './ChatStyleToggle.jsx'
 
+// `chat` shots have one capture per chat style, under screenshots/<style>/.
 const LEAD = [
-  { src: withBase('/screenshots/channel.png'), title: 'Channel view',     caption: 'An IRC-style timeline: per-message timestamps, channel-colored nicks, and the key legend always in reach.' },
-  { src: withBase('/screenshots/nodes.png'),   title: 'Node detail',      caption: 'Long and short name, hops, SNR, last position, and last heard — for all 89 nodes in range.' },
-  { src: withBase('/screenshots/config.png'),  title: 'On-device config', caption: 'Theme, Wi-Fi config UI, GPS, and notification sounds, changed on the device without reflashing.' },
+  { chat: 'channel', title: 'Channel view',     caption: 'Per-message timestamps, sender names, and the bottom bar for every screen, in whichever chat style you pick.' },
+  { src: withBase('/screenshots/nodes.png'),   title: 'Node detail',      caption: 'Long and short name, hops, SNR, last heard, signing and position — for all 205 nodes heard.' },
+  { src: withBase('/screenshots/config.png'),  title: 'On-device config', caption: 'Theme, chat style, Wi-Fi, GPS, and location sharing, changed on the device without reflashing.' },
 ]
 
 const REST = [
-  { src: withBase('/screenshots/bubbles.png'),      title: 'Bubble chat',      caption: 'The same timeline as bubbles, with your messages right-aligned in the accent color.' },
   { src: withBase('/screenshots/channels.png'),     title: 'Channel switcher', caption: 'Move between all ten channels, each independently keyed. The list slides in from the left: tap the channel name, swipe in from the screen edge, or press C on the chat screen.' },
-  { src: withBase('/screenshots/dm.png'),           title: 'Direct messages',  caption: 'One-to-one conversations addressed by node ID, kept in their own tab.' },
-  { src: withBase('/screenshots/compose.png'),      title: 'Compose',          caption: 'Enter sends, Backspace on an empty line cancels.' },
-  { src: withBase('/screenshots/emoji.png'),        title: 'Emoji picker',     caption: 'Arrows to move, Enter to insert, Backspace to close.' },
-  { src: withBase('/screenshots/node-actions.png'), title: 'Node actions',     caption: 'Traceroute, DM, favorite, request info or position, or ignore a node.' },
+  { chat: 'dm',                                     title: 'Direct messages',  caption: 'One-to-one conversations with a node, kept in their own tab.' },
+  { chat: 'compose',                                title: 'Compose',          caption: 'Enter sends, Backspace on an empty line cancels.' },
+  { src: withBase('/screenshots/emoji.png'),        title: 'Emoji tray',       caption: 'Press E in chat: arrows to move, Enter to send, Backspace to close.' },
+  { src: withBase('/screenshots/node-actions.png'), title: 'Node actions',     caption: 'Traceroute, DM, favorite, request node info or position, share, or ignore a node.' },
   { src: withBase('/screenshots/live.png'),         title: 'Live traffic',     caption: 'Real-time RX and TX across every channel, for debugging and demos.' },
 ]
 
+function shotSrc(shot, style) {
+  return shot.chat ? chatShot(style, shot.chat) : shot.src
+}
+
 const FOCUSABLE = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
 
-function Shot({ shot, onOpen, size }) {
+function Shot({ shot, style, onOpen, size }) {
+  const src = shotSrc(shot, style)
   return (
     <figure className={`shot shot-${size}`}>
       <button
@@ -28,7 +34,7 @@ function Shot({ shot, onOpen, size }) {
         onClick={() => onOpen(shot)}
         aria-label={`Enlarge ${shot.title}`}
       >
-        <img src={shot.src} alt={shot.title} loading="lazy" width="320" height="240" />
+        <img src={src} alt={shot.title} loading="lazy" width="320" height="240" />
       </button>
       <figcaption>
         <strong>{shot.title}</strong>
@@ -38,7 +44,7 @@ function Shot({ shot, onOpen, size }) {
   )
 }
 
-export default function Screenshots() {
+export default function Screenshots({ chatStyle, onChatStyleChange }) {
   const [activeShot, setActiveShot] = useState(null)
   const panelRef = useRef(null)
   const closeRef = useRef(null)
@@ -95,17 +101,22 @@ export default function Screenshots() {
       <div className="container">
         <h2>Screenshots</h2>
         <p className="measure">
-          Captured from a LilyGo T-Deck running the Camillia dark theme. The
+          Captured from a LilyGo T-Deck running the Camillia Dark theme. The
           same screens render on every board, driven by keyboard, trackball,
-          roller wheel, or touch.
+          roller wheel, or touch. Chat screens come in four styles, set under
+          Config → Chat Style.
         </p>
 
+        <div className="shots-style">
+          <ChatStyleToggle style={chatStyle} onChange={onChatStyleChange} />
+        </div>
+
         <div className="shots-lead">
-          {LEAD.map(s => <Shot key={s.src} shot={s} onOpen={open} size="lead" />)}
+          {LEAD.map(s => <Shot key={s.title} shot={s} style={chatStyle} onOpen={open} size="lead" />)}
         </div>
 
         <div className="shots-rest">
-          {REST.map(s => <Shot key={s.src} shot={s} onOpen={open} size="rest" />)}
+          {REST.map(s => <Shot key={s.title} shot={s} style={chatStyle} onOpen={open} size="rest" />)}
         </div>
 
         {activeShot && (
@@ -125,9 +136,11 @@ export default function Screenshots() {
               >
                 Close
               </button>
-              <img src={activeShot.src} alt={activeShot.title} width="1280" height="960" />
+              <img src={shotSrc(activeShot, chatStyle)} alt={activeShot.title} width="1280" height="960" />
               <div className="shot-lightbox-caption">
-                <strong>{activeShot.title}</strong>
+                <strong>{activeShot.chat
+                  ? `${activeShot.title} · ${CHAT_STYLES.find(s => s.id === chatStyle)?.label}`
+                  : activeShot.title}</strong>
                 <span>{activeShot.caption}</span>
               </div>
             </div>

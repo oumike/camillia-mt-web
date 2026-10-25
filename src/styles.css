@@ -580,6 +580,10 @@ section[id]:focus { outline: none; }
 .shot-rest figcaption strong { font-size: 0.85rem; }
 .shot-rest figcaption span { font-size: 0.8rem; }
 
+.shots-style { margin-top: 28px; }
+.shots-style + .shots-lead { margin-top: 24px; }
+.hero-screen .mode-toggle { margin-top: 16px; }
+
 .shot-lightbox {
   position: fixed;
   inset: 0;
