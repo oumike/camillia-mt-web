@@ -632,6 +632,7 @@ export const ROLES = [
   { name: 'CLIENT', label: 'Client', note: 'Sends, receives and relays for others.' },
   { name: 'TRACKER', label: 'Tracker', note: 'Prioritises sending its position.' },
   { name: 'CLIENT_HIDDEN', label: 'Client Hidden', note: 'Sends only what it must; stays out of node lists.' },
+  { name: 'CLIENT_BASE', label: 'Client Base', note: 'For a base station that stays put on mains power: relays like a client, but always carries packets to and from its favorites. Needs Camillia firmware with CLIENT_BASE support.' },
 ]
 
 // Firmware limits: Meshtastic names are at most 24 (long) and 4 (short)
