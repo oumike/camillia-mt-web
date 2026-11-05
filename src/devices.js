@@ -138,6 +138,18 @@ export const DEVICES = [
     link: 'https://lilygo.cc/products/t-display-p4',
     image: withBase('/devices/tdisplay-p4.png'),
   },
+  {
+    // LoRa runs through the on-board ESP32-C6, which keeps its factory
+    // firmware. Flashing replaces the badge.team launcher; tanmatsu.cloud puts
+    // it back. See src/hal/hw_tanmatsu.h in the firmware tree.
+    env: 'tanmatsu',
+    buy: { seller: 'Nicolai Electronics', href: 'https://shop.nicolaielectronics.nl/' },
+    name: 'Nicolai Electronics Tanmatsu',
+    chip: 'ESP32-P4',
+    desc: 'SX1262 LoRa via the ESP32-C6, 3.92″ 800×480 IPS display, full QWERTY keyboard, speaker, status LEDs, microSD.',
+    link: 'https://shop.nicolaielectronics.nl/',
+    image: withBase('/devices/tanmatsu.jpg'),
+  },
 ]
 
 // Photo, product link and seller of a camillia-mt target, for chat-server

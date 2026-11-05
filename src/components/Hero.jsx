@@ -8,7 +8,7 @@ export default function Hero({ chatStyle, onChatStyleChange }) {
         <div className="hero-copy">
           <h1>Camillia for Meshtastic</h1>
           <p className="lede">
-            Camillia is mesh radio firmware for thirteen ESP32 boards. Ten named
+            Camillia is mesh radio firmware for fourteen ESP32 boards. Ten named
             channels, direct messages, GPS, and a config UI you open in a
             browser — all of it running on the device, whether you drive it with
             a keyboard, a roller wheel, a trackball, or a touchscreen.

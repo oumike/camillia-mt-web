@@ -35,6 +35,7 @@ const ASSET_SLUG = {
   'crowpanel-50': 'crowpanel-50',
   'p4-amoled-sx1262': 'p4-amoled-sx1262',
   'p4-amoled-lr2021': 'p4-amoled-lr2021',
+  'tanmatsu': 'tanmatsu',
 }
 
 export function firmwareAssetName(env, version) {
