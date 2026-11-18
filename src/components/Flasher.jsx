@@ -265,17 +265,17 @@ export default function Flasher({ product, devices, debugReport = false, customi
                   >
                     {showNotes ? 'Hide notes' : 'Release notes'}
                   </button>
-                  {version ? (
+                  {linux ? null : version ? (
                     <a
                       className="flasher-row-btn"
                       href={firmwareUrl(product, device.env, version)}
                       download
                     >
-                      Download {linux ? '.deb' : '.bin'}
+                      Download .bin
                     </a>
                   ) : (
                     <button type="button" className="flasher-row-btn" disabled>
-                      Download {linux ? '.deb' : '.bin'}
+                      Download .bin
                     </button>
                   )}
                 </div>
