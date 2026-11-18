@@ -1,11 +1,11 @@
 const FEATURES = [
   {
     title: 'Channels',
-    body: 'Name and key each channel separately, give each its own hop limit, and switch between them without losing your place. Unread counts stay per channel. Stock Meshtastic nodes still interoperate, and the Cardputer keeps eight.',
+    body: 'Name and key each channel separately, give each its own hop limit, and switch between them without losing your place. Unread counts stay per channel. Stock Meshtastic nodes still interoperate, and the ESP32 Cardputer keeps eight.',
   },
   {
     title: 'Browser setup',
-    body: 'The device hosts a Wi-Fi access point and a config page. Set node identity, region, and channel keys from a phone or laptop — no cable, no app.',
+    body: 'The device hosts a Wi-Fi access point and a config page, or serves it on your own network. Set node identity, region, and channel keys from a phone or laptop — no cable, no app.',
   },
   {
     title: 'Position, node info, and direct messages',
@@ -25,11 +25,11 @@ const FEATURES = [
   },
   {
     title: 'Languages',
-    body: 'The on-device interface comes in English plus 21 translations, from Español and Deutsch to Lietuvių and Eesti. The Cardputer is English-only.',
+    body: 'The on-device interface comes in English plus 21 translations, from Español and Deutsch to Lietuvių and Eesti. The ESP32 Cardputer is English-only; the CardputerZero has them all.',
   },
   {
     title: 'Config export and import',
-    body: 'Export the whole configuration to YAML on microSD and import it on another board. Settings survive reboots and reflashes.',
+    body: 'Export the whole configuration to YAML on microSD, or internal flash on boards without a card, and import it on another board. Tick Append date to keep several dated backups side by side. Settings survive reboots and reflashes.',
   },
 ]
 
