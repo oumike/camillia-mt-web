@@ -2,7 +2,8 @@
 
 Information site and browser-based firmware flasher for
 [Camillia-MT](https://github.com/oumike/camillia-mt) — Meshtastic-compatible
-mesh radio firmware for fourteen ESP32-S3 and ESP32-P4 handheld LoRa devices.
+mesh radio firmware for fourteen ESP32-S3 and ESP32-P4 handheld LoRa devices,
+and an app for the Linux-based M5Stack CardputerZero.
 
 The site mirrors the firmware's 13 hand-tuned UI themes (each with a dark and
 light mode), lets you switch the page theme to preview them, and ships a
@@ -14,6 +15,10 @@ the SX1262 and LR2021 radio variants. Their ESP32-P4 application images are
 available through the same browser flasher and download flow as the ESP32-S3
 targets; the board's ESP32-C6 wireless companion firmware remains a separate
 release asset and must be provisioned independently.
+
+The M5Stack CardputerZero runs Debian, so nothing is flashed: its entry offers
+the CardputerZero App Store (share code `CMLA`) and the release's
+`camillia-cardputer-zero-<tag>_arm64.deb` in place of the Flash button.
 
 ## Develop
 

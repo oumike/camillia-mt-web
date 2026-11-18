@@ -40,6 +40,21 @@ export const DEVICES = [
     image: withBase('/devices/cardputer-cap.png'),
   },
   {
+    // Runs Debian, so Camillia is a launcher app here, not a flashed image:
+    // the release asset is an arm64 .deb and the M5Stack CardputerZero App
+    // Store carries it too. `linux` makes the flasher offer those instead of
+    // Flash. Photo is M5Stack's.
+    env: 'cardputer-zero',
+    buy: { seller: 'M5Stack', href: 'https://shop.m5stack.com/pages/m5-cardputerzero' },
+    name: 'M5Stack CardputerZero + Cap LoRa-1262',
+    chip: 'Linux',
+    desc: 'Raspberry Pi CM0 running Debian, 320×170 display, QWERTY keyboard, with the Cap LoRa-1262 (SX1262 + GPS). Camillia is an app in its launcher; install it from the CardputerZero App Store.',
+    link: 'https://shop.m5stack.com/pages/m5-cardputerzero',
+    image: withBase('/devices/cardputer-zero.png'),
+    linux: true,
+    store: { name: 'CardputerZero App Store', shareCode: 'CMLA' },
+  },
+  {
     env: 'heltec-v4',
     buy: { seller: 'Rokland', href: 'https://store.rokland.com/products/heltec-wifi-lora-32v4-esp32s3-sx1262-lora-node-meshtastic-lorawan' },
     name: 'Heltec WiFi LoRa 32 V4 + TFT',

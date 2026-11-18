@@ -125,6 +125,11 @@ export default function Flasher({ product, devices, debugReport = false, customi
 
   useEffect(() => { setImageFailed(false) }, [device.env])
 
+  // A Linux board (the CardputerZero) is never flashed: it installs the
+  // release's .deb, or the same package from its app store.
+  const linux = Boolean(device.linux)
+
+
   // Every selectable tag for this device, newest first. versionsForEnv() is
   // stable-only, so prereleases never reach the picker.
   //
@@ -136,8 +141,9 @@ export default function Flasher({ product, devices, debugReport = false, customi
     if (catalog === null) return []
     const fromCatalog = versionsForEnv(product, catalog, device.env)
     if (fromCatalog.length) return fromCatalog
-    return product.fallbackVersion ? [product.fallbackVersion] : []
-  }, [product, catalog, device.env])
+    // Older releases have no .deb, so the fallback would name a missing file.
+    return product.fallbackVersion && !device.linux ? [product.fallbackVersion] : []
+  }, [product, catalog, device.env, device.linux])
 
   useEffect(() => {
     if (!versions.length) {
@@ -150,8 +156,8 @@ export default function Flasher({ product, devices, debugReport = false, customi
   }, [versions, version])
 
   const manifestUrl = useMemo(
-    () => version ? manifestDataUrl(product, device, version) : null,
-    [product, device.env, version]
+    () => version && !linux ? manifestDataUrl(product, device, version) : null,
+    [product, device.env, version, linux]
   )
 
   const selectedRelease = useMemo(() => {
@@ -215,7 +221,7 @@ export default function Flasher({ product, devices, debugReport = false, customi
           Plug the device in over USB, pick its build profile and firmware
           version, and this page writes it straight to the device.
         </p>
-        {!supported && (
+        {!supported && !linux && (
           <div className="panel notice">
             <strong>Web Serial isn't available in this browser.</strong>{' '}
             Use a recent Chrome, Edge, or Opera on desktop. iOS Safari and
@@ -265,18 +271,28 @@ export default function Flasher({ product, devices, debugReport = false, customi
                       href={firmwareUrl(product, device.env, version)}
                       download
                     >
-                      Download .bin
+                      Download {linux ? '.deb' : '.bin'}
                     </a>
                   ) : (
                     <button type="button" className="flasher-row-btn" disabled>
-                      Download .bin
+                      Download {linux ? '.deb' : '.bin'}
                     </button>
                   )}
                 </div>
               </label>
             </div>
             <div className="flasher-actions">
-              {manifestUrl ? (
+              {linux ? (
+                version ? (
+                  <a className="btn" href={firmwareUrl(product, device.env, version)} download>
+                    Download {version} .deb
+                  </a>
+                ) : (
+                  <button className="btn" disabled>
+                    {catalog === null ? 'Loading releases…' : 'No release yet'}
+                  </button>
+                )
+              ) : manifestUrl ? (
                 <>
                   <esp-web-install-button ref={installRef} key={`${device.env}-${version}`} manifest={manifestUrl}>
                     <button
@@ -299,7 +315,7 @@ export default function Flasher({ product, devices, debugReport = false, customi
                   {catalog === null ? 'Loading releases…' : 'No release yet'}
                 </button>
               )}
-              {customize && (
+              {customize && !linux && (
                 <Customize
                   product={customize === 'cs' ? PRODUCTS.cs : PRODUCTS.mt}
                   supported={supported}
@@ -308,7 +324,7 @@ export default function Flasher({ product, devices, debugReport = false, customi
                   flashed={flashed}
                 />
               )}
-              {debugReport && (
+              {debugReport && !linux && (
                 <DebugReport
                   device={device}
                   version={version}
@@ -316,6 +332,19 @@ export default function Flasher({ product, devices, debugReport = false, customi
                 />
               )}
             </div>
+            {linux && (
+              <p className="browser-note">
+                {device.name.split(' + ')[0]} runs Linux, so nothing is flashed.
+                {device.store && <> Install Camillia from the {device.store.name}: search for
+                  it, or enter share code <span className="kbd">{device.store.shareCode}</span>.</>}
+                {version && <>
+                  {' '}Or copy the .deb to the device and run{' '}
+                  <span className="kbd">sudo apt install ./{product.assetName(device.env, version)}</span>;
+                  it appears in the launcher, and a newer .deb installs over it with
+                  settings kept.
+                </>}
+              </p>
+            )}
             {versionStale ? (
               <p className="browser-note">
                 Couldn't reach the GitHub API release list

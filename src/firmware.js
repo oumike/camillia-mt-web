@@ -38,7 +38,13 @@ const ASSET_SLUG = {
   'tanmatsu': 'tanmatsu',
 }
 
+// Linux targets: release.yml's arm64 .deb rather than a flashable .bin.
+const LINUX_ASSET = {
+  'cardputer-zero': (version) => `camillia-cardputer-zero-${version}_arm64.deb`,
+}
+
 export function firmwareAssetName(env, version) {
+  if (LINUX_ASSET[env]) return LINUX_ASSET[env](version)
   const slug = ASSET_SLUG[env]
   if (!slug) throw new Error(`No release asset mapping for env "${env}"`)
   return `camillia-mt-${slug}-${version}.bin`
